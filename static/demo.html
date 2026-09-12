@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeRPG — Virtual Progression & Real-World RPG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #060911;
+            --bg-card: #0d1322;
+            --bg-card-hover: #131b30;
+            --border-color: #1e293b;
+            --border-highlight: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --gold: #f59e0b;
+            --gold-glow: rgba(245, 158, 11, 0.35);
+            --xp-blue: #0ea5e9;
+            --xp-glow: rgba(14, 165, 233, 0.35);
+            --str-red: #f43f5e;
+            --know-blue: #3b82f6;
+            --vit-green: #10b981;
+            --will-purple: #a855f7;
+            --font-main: 'Inter', sans-serif;
+            --font-title: 'Cinzel', serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg-base) 70%);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        canvas#confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Top Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(13, 19, 34, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand h1 {
+            font-family: var(--font-title);
+            font-size: 1.7rem;
+            background: linear-gradient(135deg, #38bdf8, #c084fc, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1.5px;
+        }
+
+        .sys-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--vit-green);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--vit-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--vit-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        .user-panel {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e293b;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .stat-pill.gold { color: var(--gold); border: 1px solid var(--gold-glow); box-shadow: 0 0 10px var(--gold-glow); }
+        .stat-pill.streak { color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3); }
+
+        .btn {
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            color: #fff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn:active { transform: translateY(0); }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .btn-outline:hover {
+            background: #1e293b;
+            color: var(--text-main);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: #000;
+            font-weight: 700;
+        }
+
+        .btn-gold:hover { box-shadow: 0 4px 16px var(--gold-glow); }
+
+        .btn-green { background: linear-gradient(135deg, #059669, #10b981); }
+
+        /* Card System */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 12px;
+        }
+
+        .card-header h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Character Attributes Grid */
+        .attr-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 800px) {
+            .attr-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .attr-box {
+            background: #060911;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .attr-box:hover {
+            transform: translateY(-2px);
+        }
+
+        .attr-box.str { border-color: rgba(244, 63, 94, 0.35); }
+        .attr-box.know { border-color: rgba(59, 130, 246, 0.35); }
+        .attr-box.vit { border-color: rgba(16, 185, 129, 0.35); }
+        .attr-box.will { border-color: rgba(168, 85, 247, 0.35); }
+
+        .attr-box.str:hover { box-shadow: 0 0 16px rgba(244, 63, 94, 0.25); }
+        .attr-box.know:hover { box-shadow: 0 0 16px rgba(59, 130, 246, 0.25); }
+        .attr-box.vit:hover { box-shadow: 0 0 16px rgba(16, 185, 129, 0.25); }
+        .attr-box.will:hover { box-shadow: 0 0 16px rgba(168, 85, 247, 0.25); }
+
+        .attr-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .attr-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+        }
+
+        .attr-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Hero Progress Bar */
+        .progress-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 14px;
+            background: #060911;
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0284c7, #38bdf8, #818cf8);
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 14px var(--xp-glow);
+        }
+
+        /* Layout Grid */
+        .grid-main {
+            display: grid;
+            grid-template-columns: 1.9fr 1.1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-main { grid-template-columns: 1fr; }
+        }
+
+        /* Presets row */
+        .presets-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .preset-btn {
+            background: #111a2e;
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: #1e293b;
+            border-color: var(--border-highlight);
+            color: #fff;
+        }
+
+        /* Quests Form */
+        .quest-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .input-dark {
+            background: #060911;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            flex: 1;
+        }
+
+        .input-dark:focus {
+            border-color: var(--border-highlight);
+        }
+
+        .select-dark {
+            background: #060911;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Quests List */
+        .quest-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 440px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .quest-item {
+            background: #060911;
+            border: 1px solid var(--border-color);
+            padding: 14px 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .quest-item:hover {
+            border-color: #334155;
+            background: #0c1222;
+            transform: translateX(3px);
+        }
+
+        .quest-item.completed {
+            opacity: 0.55;
+            border-color: rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .tag-pill {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .tag-strength { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
+        .tag-knowledge { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .tag-vitality { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .tag-willpower { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+        /* Shop & Rewards Tabs */
+        .subtabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .subtab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .subtab-btn.active {
+            background: #1e293b;
+            color: #fff;
+        }
+
+        /* Shop Grid */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 12px;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .shop-card {
+            background: #060911;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .shop-card:hover { border-color: var(--gold); }
+
+        /* Celebration Modal */
+        .celeb-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .celeb-box {
+            background: linear-gradient(145deg, #0d1322, #18223c);
+            border: 2px solid var(--border-highlight);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 440px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.35);
+            animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes scaleUp { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .celeb-icon { font-size: 3.5rem; margin-bottom: 10px; }
+        .celeb-title { font-family: var(--font-title); font-size: 1.5rem; color: #38bdf8; margin-bottom: 6px; }
+
+        .reward-chips {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .reward-chip {
+            background: #060911;
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* Auth Modal */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .auth-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Celebration Modal -->
+    <div id="celeb-modal" class="celeb-overlay hidden">
+        <div class="celeb-box">
+            <div class="celeb-icon" id="celeb-icon">⚔️</div>
+            <div class="celeb-title" id="celeb-title">Quest Claimed!</div>
+            <p id="celeb-desc" style="color: var(--text-muted); font-size: 0.9rem;">Real-world action translated to virtual power.</p>
+
+            <div class="reward-chips">
+                <div class="reward-chip" style="color: #38bdf8;" id="celeb-xp">+120 XP</div>
+                <div class="reward-chip" style="color: var(--gold);" id="celeb-coins">+60 Gold</div>
+                <div class="reward-chip" id="celeb-attr" style="color: #fb7185;">+4 STR</div>
+            </div>
+
+            <div id="celeb-level-up" class="hidden" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--gold); border-radius: 10px; padding: 10px; margin-bottom: 16px; color: var(--gold); font-weight: 700;">
+                🎉 LEVEL UP! You reached Level <span id="celeb-lvl-num">2</span>!
+            </div>
+
+            <button class="btn btn-gold" style="width: 100%; justify-content: center; padding: 12px;" onclick="closeCelebration()">Claim Victory & Continue</button>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-overlay hidden">
+        <div class="auth-box">
+            <h2 style="font-family: var(--font-title); text-align: center; color: #38bdf8; margin-bottom: 14px;">LifeRPG Nexus</h2>
+            <div style="display: flex; gap: 8px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <button class="btn btn-outline" id="tab-login-btn" onclick="switchAuthTab('login')">Sign In</button>
+                <button class="btn btn-outline" id="tab-reg-btn" onclick="switchAuthTab('register')">Create Hero</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Email or Username</label>
+                    <input type="text" id="login-id" class="input-dark" value="dragon_slayer_99" style="width: 100%;" required>
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Password</label>
+                    <input type="password" id="login-pass" class="input-dark" value="mypassword123" style="width: 100%;" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; justify-content: center;">Enter LifeRPG</button>
+                <div style="margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 6px;">⚡ 1-Click Demo Accounts:</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn" style="flex: 1; font-size: 0.75rem; padding: 7px; background: linear-gradient(135deg, #10b981, #059669);" onclick="quickLogin('SASWAT', 'saswat2307')">👤 SASWAT</button>
+                        <button type="button" class="btn btn-outline" style="flex: 1; font-size: 0.75rem; padding: 7px;" onclick="quickLogin('dragon_slayer_99', 'mypassword123')">🗡️ Slayer</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Hero Name</label>
+                    <input type="text" id="reg-name" class="input-dark" placeholder="Vanguard" style="width: 100%;" required>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Email</label>
+                    <input type="email" id="reg-email" class="input-dark" placeholder="hero@liferpg.io" style="width: 100%;" required>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Username</label>
+                    <input type="text" id="reg-username" class="input-dark" placeholder="valkyrie_99" style="width: 100%;" required>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Password</label>
+                    <input type="password" id="reg-password" class="input-dark" style="width: 100%;" required>
+                </div>
+                <div style="margin-bottom: 14px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">Confirm Password</label>
+                    <input type="password" id="reg-confirm" class="input-dark" style="width: 100%;" required>
+                </div>
+                <button type="submit" class="btn btn-green" style="width: 100%; justify-content: center;">Embark on Journey</button>
+            </form>
+            <div id="auth-msg" style="font-size: 0.8rem; text-align: center; color: var(--str-red); margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Top Navbar -->
+        <header>
+            <div class="brand">
+                <h1>⚔️ LifeRPG</h1>
+                <div class="sys-badge">
+                    <span class="dot"></span>
+                    <span id="sys-status">PostgreSQL Connected • v1.2</span>
+                </div>
+            </div>
+            <div class="user-panel">
+                <button class="btn btn-outline" style="font-size: 0.75rem; padding: 6px 10px;" id="audio-toggle-btn" onclick="toggleAudio()">🔊 Sound: ON</button>
+                <div class="stat-pill gold">🪙 <span id="user-coins">0</span> Gold</div>
+                <div class="stat-pill streak">🔥 <span id="user-streak">0</span> Streak</div>
+                <button class="btn btn-outline" style="padding: 6px 12px;" onclick="triggerLogout()">Logout</button>
+            </div>
+        </header>
+
+        <!-- Daily Login Streak Banner / Card -->
+        <div class="card" style="background: linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(13, 19, 34, 0.98)); border: 1px solid rgba(245, 158, 11, 0.35);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 2rem;">🔥</span>
+                    <div>
+                        <h3 style="font-size: 1.15rem; color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+                            Daily Login Streak: <span id="login-streak-count">0</span> Days
+                        </h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Consecutive check-in multiplier bonus & 7-day jackpot track</span>
+                    </div>
+                </div>
+                <button id="claim-login-btn" class="btn btn-gold" onclick="claimDailyLoginBonus()">
+                    🎁 Claim Daily Login Bonus
+                </button>
+            </div>
+
+            <!-- 7-Day Track Grid -->
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;" id="login-streak-track">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+
+        <!-- Player Progression & Attribute Sheet -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 id="char-name">Welcome, Hero</h2>
+                    <span id="char-title" style="font-size: 0.85rem; color: #818cf8; font-weight: 700;">Novice Adventurer</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 1.5rem; font-weight: 800; color: #38bdf8;" id="char-level">Lvl 1</span>
+                </div>
+            </div>
+
+            <!-- XP Bar -->
+            <div class="progress-box">
+                <div class="progress-labels">
+                    <span id="xp-text">0 / 100 XP</span>
+                    <span id="xp-pct">0%</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="xp-bar"></div>
+                </div>
+            </div>
+
+            <!-- Core RPG Attributes -->
+            <div class="attr-grid">
+                <div class="attr-box str">
+                    <div class="attr-label" style="color: #fb7185;">
+                        <span>🏋️ Strength</span>
+                        <span>STR</span>
+                    </div>
+                    <div class="attr-val" id="val-str" style="color: #fb7185;">10</div>
+                    <div class="attr-sub">Gym, weights & workouts</div>
+                </div>
+
+                <div class="attr-box know">
+                    <div class="attr-label" style="color: #60a5fa;">
+                        <span>📖 Knowledge</span>
+                        <span>INT</span>
+                    </div>
+                    <div class="attr-val" id="val-know" style="color: #60a5fa;">10</div>
+                    <div class="attr-sub">Study, books & coding</div>
+                </div>
+
+                <div class="attr-box vit">
+                    <div class="attr-label" style="color: #34d399;">
+                        <span>⚡ Vitality</span>
+                        <span>VIT</span>
+                    </div>
+                    <div class="attr-val" id="val-vit" style="color: #34d399;">10</div>
+                    <div class="attr-sub">Cardio, running & steps</div>
+                </div>
+
+                <div class="attr-box will">
+                    <div class="attr-label" style="color: #c084fc;">
+                        <span>🛡️ Willpower</span>
+                        <span>WIL</span>
+                    </div>
+                    <div class="attr-val" id="val-will" style="color: #c084fc;">10</div>
+                    <div class="attr-sub">Habits, focus & discipline</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="grid-main">
+            <!-- Left: Quests Hub -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📜 Quests Hub</h2>
+                    <button class="btn btn-outline" style="font-size: 0.75rem;" onclick="loadQuests()">↻ Refresh</button>
+                </div>
+
+                <!-- Quick Presets -->
+                <div class="presets-row">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); align-self: center;">Quick Presets:</span>
+                    <button class="preset-btn" onclick="applyPreset('Gym Heavy Squats & Bench Press', 80, 'strength')">🏋️ Gym Workout (+STR)</button>
+                    <button class="preset-btn" onclick="applyPreset('Study Algorithms & 10 Pages Reading', 75, 'knowledge')">📖 Deep Study (+INT)</button>
+                    <button class="preset-btn" onclick="applyPreset('5km Outdoor Run & Hydration', 60, 'vitality')">🏃 5km Cardio (+VIT)</button>
+                    <button class="preset-btn" onclick="applyPreset('20 Min Mindful Meditation & Journaling', 50, 'willpower')">🧘 Habit (+WIL)</button>
+                </div>
+
+                <!-- Quest Form -->
+                <form class="quest-form" onsubmit="createQuest(event)">
+                    <input type="text" id="quest-title" class="input-dark" placeholder="Task title..." required>
+                    <select id="quest-attr" class="select-dark">
+                        <option value="auto">⚡ Auto-Detect</option>
+                        <option value="strength">🏋️ Strength (Gym)</option>
+                        <option value="knowledge">📖 Knowledge (Study)</option>
+                        <option value="vitality">🏃 Vitality (Cardio)</option>
+                        <option value="willpower">🛡️ Willpower (Habits)</option>
+                    </select>
+                    <input type="number" id="quest-xp" class="input-dark" style="max-width: 80px;" value="50" min="10" max="500">
+                    <button type="submit" class="btn">+ Add</button>
+                </form>
+
+                <div class="quest-list" id="quest-items">
+                    <!-- Quests populated here -->
+                </div>
+            </div>
+
+            <!-- Right: Shop & Custom Rewards Bazaar -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🛒 Rewards Bazaar</h2>
+                    <span style="font-size: 0.8rem; color: var(--gold);" id="side-gold-tag">🪙 0 Gold</span>
+                </div>
+
+                <div class="subtabs">
+                    <button class="subtab-btn active" id="tab-shop-btn" onclick="switchSideTab('shop')">Virtual Shop</button>
+                    <button class="subtab-btn" id="tab-custom-btn" onclick="switchSideTab('custom')">Real-Life Rewards</button>
+                    <button class="subtab-btn" id="tab-inv-btn" onclick="switchSideTab('inv')">Inventory</button>
+                    <button class="subtab-btn" id="tab-items-btn" onclick="switchSideTab('items')">Private Items</button>
+                </div>
+
+                <!-- Virtual Shop Content -->
+                <div id="side-shop">
+                    <div class="shop-grid" id="shop-items"></div>
+                </div>
+
+                <!-- Custom Real-Life Rewards Content -->
+                <div id="side-custom" class="hidden">
+                    <form onsubmit="createCustomReward(event)" style="display: flex; gap: 6px; margin-bottom: 12px;">
+                        <input type="text" id="cust-title" class="input-dark" placeholder="e.g. Cheat Day Pizza..." required>
+                        <input type="number" id="cust-cost" class="input-dark" style="max-width: 80px;" placeholder="Cost" value="80" min="10">
+                        <button type="submit" class="btn btn-gold">+ Add</button>
+                    </form>
+                    <div id="custom-rewards-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Player Inventory Content -->
+                <div id="side-inv" class="hidden">
+                    <div id="inv-items" style="display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Legacy Private Items Content -->
+                <div id="side-items" class="hidden">
+                    <form onsubmit="createLegacyItem(event)" style="display: flex; gap: 6px; margin-bottom: 12px;">
+                        <input type="text" id="legacy-item-title" class="input-dark" placeholder="New private item title..." required>
+                        <button type="submit" class="btn">+ Add</button>
+                    </form>
+                    <div id="legacy-items-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Audit Log & Global Leaderboard -->
+        <div class="grid-main">
+            <!-- Completed Quest Audit History -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📜 Quest History & Stat Log</h2>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Immutable audit trail</span>
+                </div>
+                <div id="history-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto;">
+                    <!-- History log items here -->
+                </div>
+            </div>
+
+            <!-- Global Leaderboard -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🏆 Global Leaderboard</h2>
+                    <button class="btn btn-outline" style="font-size: 0.75rem;" onclick="loadLeaderboard()">Refresh</button>
+                </div>
+                <div id="lead-list" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Leaderboard entries here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let audioEnabled = true;
+
+        /* Web Audio API Sound Synthesizer */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(frequencies, durations, type = 'sine') {
+            if (!audioEnabled || audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            if (!audioEnabled) return;
+
+            let startTime = audioCtx.currentTime;
+            frequencies.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.12, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + durations[i]);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + durations[i]);
+                startTime += durations[i] * 0.8;
+            });
+        }
+
+        function playChime() { playSound([523.25, 659.25, 783.99, 1046.50], [0.1, 0.1, 0.12, 0.25]); }
+        function playCoinSound() { playSound([987.77, 1318.51], [0.08, 0.18], 'triangle'); }
+        function playLevelUp() { playSound([440, 554.37, 659.25, 880, 1108.73], [0.12, 0.12, 0.12, 0.18, 0.4], 'triangle'); }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audio-toggle-btn').textContent = audioEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+        }
+
+        /* Canvas Particle Confetti */
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function spawnConfetti(x, y, count = 60) {
+            const colors = ['#38bdf8', '#f59e0b', '#f43f5e', '#10b981', '#a855f7', '#fff'];
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x || window.innerWidth / 2,
+                    y: y || window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: (Math.random() - 0.7) * 16,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 8 + 4,
+                    alpha: 1,
+                    rotation: Math.random() * 360,
+                    vRot: (Math.random() - 0.5) * 10
+                });
+            }
+        }
+
+        function renderParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, idx) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.35; // gravity
+                p.alpha -= 0.012;
+                p.rotation += p.vRot;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+
+                if (p.alpha <= 0) particles.splice(idx, 1);
+            });
+            requestAnimationFrame(renderParticles);
+        }
+        requestAnimationFrame(renderParticles);
+
+        /* API Call Utility */
+        async function api(endpoint, options = {}) {
+            const res = await fetch(API_BASE + endpoint, { credentials: 'include', ...options });
+            if (res.status === 401 && !endpoint.includes('/login') && !endpoint.includes('/refresh')) {
+                const rRes = await fetch(API_BASE + '/refresh', { method: 'POST', credentials: 'include' });
+                if (rRes.ok) return api(endpoint, options);
+                showAuthModal();
+            }
+            return res;
+        }
+
+        /* Preset applicator */
+        function applyPreset(title, xp, attr) {
+            document.getElementById('quest-title').value = title;
+            document.getElementById('quest-xp').value = xp;
+            document.getElementById('quest-attr').value = attr;
+        }
+
+        /* Celebration Modal Controls */
+        function triggerCelebration(claimData) {
+            document.getElementById('celeb-modal').classList.remove('hidden');
+            document.getElementById('celeb-xp').textContent = `+${claimData.total_xp_awarded} XP`;
+            document.getElementById('celeb-coins').textContent = `+${claimData.coins_awarded} Gold`;
+
+            const attrChip = document.getElementById('celeb-attr');
+            const attrTag = claimData.attribute_type.toUpperCase();
+            attrChip.textContent = `+${claimData.attribute_gain} ${attrTag.slice(0, 3)}`;
+
+            if (claimData.attribute_type === 'strength') {
+                attrChip.style.color = '#fb7185';
+                document.getElementById('celeb-icon').textContent = '🏋️';
+            } else if (claimData.attribute_type === 'knowledge') {
+                attrChip.style.color = '#60a5fa';
+                document.getElementById('celeb-icon').textContent = '📖';
+            } else if (claimData.attribute_type === 'vitality') {
+                attrChip.style.color = '#34d399';
+                document.getElementById('celeb-icon').textContent = '🏃';
+            } else {
+                attrChip.style.color = '#c084fc';
+                document.getElementById('celeb-icon').textContent = '🛡️';
+            }
+
+            const lvlBox = document.getElementById('celeb-level-up');
+            if (claimData.leveled_up) {
+                lvlBox.classList.remove('hidden');
+                document.getElementById('celeb-lvl-num').textContent = claimData.new_level;
+                playLevelUp();
+            } else {
+                lvlBox.classList.add('hidden');
+                playChime();
+            }
+
+            spawnConfetti(window.innerWidth / 2, window.innerHeight / 2, 80);
+        }
+
+        function closeCelebration() {
+            document.getElementById('celeb-modal').classList.add('hidden');
+        }
+
+        /* Auth Handling */
+        function showAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+        function hideAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+        function switchAuthTab(tab) {
+            const loginBtn = document.getElementById('tab-login-btn');
+            const regBtn = document.getElementById('tab-reg-btn');
+            const loginForm = document.getElementById('login-form');
+            const regForm = document.getElementById('register-form');
+
+            if (tab === 'login') {
+                loginBtn.classList.remove('btn-outline');
+                loginBtn.classList.add('btn');
+                regBtn.classList.add('btn-outline');
+                regBtn.classList.remove('btn');
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+            } else {
+                regBtn.classList.remove('btn-outline');
+                regBtn.classList.add('btn');
+                loginBtn.classList.add('btn-outline');
+                loginBtn.classList.remove('btn');
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const body = new URLSearchParams();
+            body.append('username', document.getElementById('login-id').value);
+            body.append('password', document.getElementById('login-pass').value);
+
+            const res = await api('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body
+            });
+
+            if (res.ok) {
+                hideAuthModal();
+                initApp();
+            } else {
+                const err = await res.json();
+                document.getElementById('auth-msg').textContent = err.detail || 'Login failed';
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const res = await api('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: document.getElementById('reg-name').value,
+                    email: document.getElementById('reg-email').value,
+                    username: document.getElementById('reg-username').value,
+                    password: document.getElementById('reg-password').value,
+                    confirm_password: document.getElementById('reg-confirm').value
+                })
+            });
+
+            if (res.ok) {
+                alert('Account forged! Please sign in.');
+                switchAuthTab('login');
+            } else {
+                const err = await res.json();
+                document.getElementById('auth-msg').textContent = err.detail || 'Registration failed';
+            }
+        }
+
+        async function triggerLogout() {
+            await api('/logout', { method: 'POST' });
+            showAuthModal();
+        }
+
+        /* Profile & Attributes */
+        async function loadProfile() {
+            const res = await api('/api/profile');
+            if (!res.ok) return;
+            const p = await res.json();
+
+            document.getElementById('char-name').textContent = p.name || p.username;
+            document.getElementById('char-title').textContent = p.rank_title;
+            document.getElementById('char-level').textContent = `Lvl ${p.level}`;
+            document.getElementById('user-coins').textContent = p.coins;
+            document.getElementById('side-gold-tag').textContent = `🪙 ${p.coins} Gold`;
+            document.getElementById('user-streak').textContent = p.streak;
+
+            document.getElementById('xp-text').textContent = `${p.xp} / ${p.next_level_xp} XP`;
+            document.getElementById('xp-pct').textContent = `${p.progress_pct}%`;
+            document.getElementById('xp-bar').style.width = `${p.progress_pct}%`;
+
+            document.getElementById('val-str').textContent = p.strength;
+            document.getElementById('val-know').textContent = p.knowledge;
+            document.getElementById('val-vit').textContent = p.vitality;
+            document.getElementById('val-will').textContent = p.willpower;
+
+            renderLoginStreakTrack(p.login_streak, p.daily_login_claimed_today);
+        }
+
+        /* Daily Login Streak System */
+        function renderLoginStreakTrack(streak, claimedToday) {
+            document.getElementById('login-streak-count').textContent = streak || 0;
+            const btn = document.getElementById('claim-login-btn');
+            if (claimedToday) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.textContent = '✓ Claimed Today';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.textContent = '🎁 Claim Daily Login Bonus';
+            }
+
+            const track = document.getElementById('login-streak-track');
+            track.innerHTML = '';
+            const cycleDay = streak > 0 ? (((streak - 1) % 7) + 1) : 0;
+            const daysData = [
+                { day: 1, xp: 25, coins: 15 },
+                { day: 2, xp: 35, coins: 20 },
+                { day: 3, xp: 50, coins: 30 },
+                { day: 4, xp: 70, coins: 45 },
+                { day: 5, xp: 95, coins: 60 },
+                { day: 6, xp: 125, coins: 80 },
+                { day: 7, xp: 250, coins: 150, jackpot: true },
+            ];
+
+            daysData.forEach(d => {
+                const isPast = d.day < cycleDay || (d.day === cycleDay && claimedToday);
+                const isCurrent = d.day === (claimedToday ? (cycleDay % 7) + 1 : cycleDay || 1);
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    background: ${isPast ? 'rgba(16, 185, 129, 0.12)' : (isCurrent ? 'rgba(245, 158, 11, 0.15)' : '#060911')};
+                    border: 1px solid ${isPast ? '#10b981' : (isCurrent ? '#f59e0b' : '#1e293b')};
+                    border-radius: 8px;
+                    padding: 8px 6px;
+                    text-align: center;
+                    font-size: 0.72rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 3px;
+                    box-shadow: ${isCurrent ? '0 0 10px rgba(245, 158, 11, 0.25)' : 'none'};
+                `;
+                box.innerHTML = `
+                    <div style="font-weight:700; color: ${isPast ? '#10b981' : (isCurrent ? '#f59e0b' : '#94a3b8')};">
+                        ${isPast ? '✓ ' : ''}Day ${d.day}
+                    </div>
+                    <div style="font-size: 1.1rem;">${d.jackpot ? '👑' : (isPast ? '💎' : '📦')}</div>
+                    <div style="color: var(--gold); font-weight:700;">+${d.coins}🪙</div>
+                    <div style="color: #38bdf8; font-size:0.65rem;">+${d.xp}XP</div>
+                `;
+                track.appendChild(box);
+            });
+        }
+
+        async function claimDailyLoginBonus() {
+            const res = await api('/api/profile/claim-daily-login', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.already_claimed) {
+                    alert(data.message);
+                } else {
+                    playLevelUp();
+                    playCoinSound();
+                    spawnConfetti(window.innerWidth / 2, window.innerHeight * 0.35, 100);
+                    alert(`🎉 ${data.message}`);
+                    loadProfile();
+                }
+            }
+        }
+
+        /* Quests Hub */
+        async function loadQuests() {
+            const res = await api('/quests');
+            if (!res.ok) return;
+            const quests = await res.json();
+            const box = document.getElementById('quest-items');
+            box.innerHTML = '';
+
+            if (quests.length === 0) {
+                box.innerHTML = '<div style="color:#64748b; padding:12px; font-size:0.85rem;">No active quests. Choose a quick preset above!</div>';
+                return;
+            }
+
+            quests.forEach(q => {
+                const item = document.createElement('div');
+                item.className = `quest-item ${q.completed ? 'completed' : ''}`;
+                const titleLower = q.title.toLowerCase();
+                let tagClass = 'tag-willpower';
+                let tagText = 'HABIT';
+                if (titleLower.includes('gym') || titleLower.includes('workout') || titleLower.includes('squat') || titleLower.includes('bench') || titleLower.includes('lift')) {
+                    tagClass = 'tag-strength'; tagText = 'GYM • STR';
+                } else if (titleLower.includes('study') || titleLower.includes('read') || titleLower.includes('code') || titleLower.includes('book')) {
+                    tagClass = 'tag-knowledge'; tagText = 'STUDY • INT';
+                } else if (titleLower.includes('run') || titleLower.includes('walk') || titleLower.includes('cardio')) {
+                    tagClass = 'tag-vitality'; tagText = 'CARDIO • VIT';
+                }
+
+                item.innerHTML = `
+                    <div>
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <span class="tag-pill ${tagClass}">${tagText}</span>
+                            <h4 style="font-size:0.95rem;">${q.title}</h4>
+                        </div>
+                        <span style="font-size:0.75rem; color:#38bdf8; font-weight:700;">+${q.xp_reward} XP</span>
+                    </div>
+                    <div>
+                        ${q.completed ? '<span style="color:#10b981; font-weight:700; font-size:0.85rem;">✓ Completed</span>' : `<button class="btn btn-green" onclick="claimQuest(${q.id}, this)">Claim Rewards</button>`}
+                    </div>
+                `;
+                box.appendChild(item);
+            });
+        }
+
+        async function createQuest(e) {
+            e.preventDefault();
+            const title = document.getElementById('quest-title').value;
+            const xp = parseInt(document.getElementById('quest-xp').value) || 50;
+
+            const res = await api('/quests', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, xp_reward: xp })
+            });
+
+            if (res.ok) {
+                document.getElementById('quest-title').value = '';
+                loadQuests();
+            }
+        }
+
+        async function claimQuest(id, btnEl) {
+            const attrSelect = document.getElementById('quest-attr').value;
+            const url = attrSelect !== 'auto' ? `/api/quests/${id}/claim?attribute=${attrSelect}` : `/api/quests/${id}/claim`;
+
+            const res = await api(url, { method: 'POST' });
+            if (res.ok) {
+                const claimData = await res.json();
+                triggerCelebration(claimData);
+                loadProfile();
+                loadQuests();
+                loadHistory();
+                loadLeaderboard();
+            }
+        }
+
+        /* Quest History */
+        async function loadHistory() {
+            const res = await api('/api/quests/history');
+            if (!res.ok) return;
+            const history = await res.json();
+            const box = document.getElementById('history-list');
+            box.innerHTML = '';
+
+            if (history.length === 0) {
+                box.innerHTML = '<span style="color:#64748b; font-size:0.8rem; padding:8px;">No completed quest history yet.</span>';
+                return;
+            }
+
+            history.slice(0, 6).forEach(h => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background:#060911; padding:8px 12px; border-radius:8px; border:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center;';
+                row.innerHTML = `
+                    <div>
+                        <span style="font-weight:600; font-size:0.85rem;">${h.quest_title}</span>
+                        <span style="color:#94a3b8; font-size:0.75rem; margin-left:6px;">(${h.attribute_type.toUpperCase()} +${h.attribute_gain})</span>
+                    </div>
+                    <span style="color:#38bdf8; font-size:0.8rem; font-weight:700;">+${h.xp_awarded} XP</span>
+                `;
+                box.appendChild(row);
+            });
+        }
+
+        /* Subtabs Switching */
+        function switchSideTab(tab) {
+            document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}-btn`).classList.add('active');
+
+            document.getElementById('side-shop').classList.add('hidden');
+            document.getElementById('side-custom').classList.add('hidden');
+            document.getElementById('side-inv').classList.add('hidden');
+            document.getElementById('side-items').classList.add('hidden');
+
+            document.getElementById(`side-${tab}`).classList.remove('hidden');
+
+            if (tab === 'shop') loadShop();
+            if (tab === 'custom') loadCustomRewards();
+            if (tab === 'inv') loadInventory();
+            if (tab === 'items') loadLegacyItems();
+        }
+
+        async function quickLogin(u, p) {
+            document.getElementById('login-id').value = u;
+            document.getElementById('login-pass').value = p;
+            const fakeEvent = { preventDefault: () => {} };
+            await handleLogin(fakeEvent);
+        }
+
+        async function loadLegacyItems() {
+            const res = await api('/items');
+            if (!res.ok) return;
+            const items = await res.json();
+            const box = document.getElementById('legacy-items-list');
+            box.innerHTML = '';
+            if (items.length === 0) {
+                box.innerHTML = '<span style="color:#64748b; font-size:0.8rem; padding:8px;">No private items yet. Add one above!</span>';
+                return;
+            }
+            items.forEach(it => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background:#060911; padding:8px 12px; border-radius:8px; border:1px solid #1e293b; font-size:0.85rem; color:#f1f5f9;';
+                row.textContent = `📦 ${it.title}`;
+                box.appendChild(row);
+            });
+        }
+
+        async function createLegacyItem(e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('legacy-item-title');
+            if (!titleInput.value.trim()) return;
+            const res = await api('/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: titleInput.value.trim() })
+            });
+            if (res.ok) {
+                titleInput.value = '';
+                loadLegacyItems();
+            }
+        }
+
+        /* Virtual Shop */
+        async function loadShop() {
+            const res = await api('/api/shop/catalog');
+            if (!res.ok) return;
+            const items = await res.json();
+            const box = document.getElementById('shop-items');
+            box.innerHTML = '';
+
+            items.forEach(i => {
+                const card = document.createElement('div');
+                card.className = 'shop-card';
+                card.innerHTML = `
+                    <div>
+                        <h4 style="font-size:0.85rem; color:#f1f5f9;">${i.name}</h4>
+                        <p style="font-size:0.75rem; color:#94a3b8;">${i.description}</p>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:var(--gold); font-weight:700; font-size:0.85rem;">🪙 ${i.cost}</span>
+                        <button class="btn btn-gold" style="padding:4px 10px; font-size:0.75rem;" ${!i.can_afford ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''} onclick="buyShopItem(${i.id})">Buy</button>
+                    </div>
+                `;
+                box.appendChild(card);
+            });
+        }
+
+        async function buyShopItem(id) {
+            const res = await api(`/api/shop/${id}/buy`, { method: 'POST' });
+            if (res.ok) {
+                playCoinSound();
+                spawnConfetti(window.innerWidth * 0.7, window.innerHeight * 0.5, 40);
+                loadProfile();
+                loadShop();
+            }
+        }
+
+        /* Custom Real-Life Rewards */
+        async function loadCustomRewards() {
+            const res = await api('/api/rewards/custom');
+            if (!res.ok) return;
+            const rewards = await res.json();
+            const box = document.getElementById('custom-rewards-list');
+            box.innerHTML = '';
+
+            if (rewards.length === 0) {
+                box.innerHTML = '<span style="color:#64748b; font-size:0.8rem; padding:8px;">Add real-world rewards above (e.g. Cheat Meal, Movie Night)!</span>';
+                return;
+            }
+
+            rewards.forEach(r => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background:#060911; padding:10px 12px; border-radius:8px; border:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center;';
+                row.innerHTML = `
+                    <div>
+                        <div style="font-weight:600; font-size:0.85rem;">${r.icon} ${r.title}</div>
+                        <div style="color:var(--gold); font-size:0.75rem; font-weight:700;">🪙 ${r.cost_coins} Gold • Redeemed ${r.redeemed_count}x</div>
+                    </div>
+                    <button class="btn btn-gold" style="padding:4px 10px; font-size:0.75rem;" ${!r.can_afford ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''} onclick="redeemCustomReward(${r.id})">Redeem</button>
+                `;
+                box.appendChild(row);
+            });
+        }
+
+        async function createCustomReward(e) {
+            e.preventDefault();
+            const title = document.getElementById('cust-title').value;
+            const cost = parseInt(document.getElementById('cust-cost').value) || 50;
+
+            const res = await api('/api/rewards/custom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, cost_coins: cost, icon: '🎮' })
+            });
+
+            if (res.ok) {
+                document.getElementById('cust-title').value = '';
+                loadCustomRewards();
+            }
+        }
+
+        async function redeemCustomReward(id) {
+            const res = await api(`/api/rewards/custom/${id}/redeem`, { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                playCoinSound();
+                spawnConfetti(window.innerWidth * 0.7, window.innerHeight * 0.5, 50);
+                alert(data.message);
+                loadProfile();
+                loadCustomRewards();
+            }
+        }
+
+        /* Player Inventory */
+        async function loadInventory() {
+            const res = await api('/api/inventory');
+            if (!res.ok) return;
+            const items = await res.json();
+            const box = document.getElementById('inv-items');
+            box.innerHTML = '';
+
+            if (items.length === 0) {
+                box.innerHTML = '<span style="color:#64748b; font-size:0.8rem; padding:8px;">Inventory empty. Purchase potions or scrolls from the shop!</span>';
+                return;
+            }
+
+            items.forEach(it => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background:#060911; padding:10px 12px; border-radius:8px; border:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center;';
+                row.innerHTML = `
+                    <div>
+                        <div style="font-weight:600; font-size:0.85rem;">${it.name} <span style="color:#94a3b8; font-size:0.75rem;">(x${it.quantity})</span></div>
+                        <div style="color:#94a3b8; font-size:0.75rem;">${it.description}</div>
+                    </div>
+                    <button class="btn btn-outline" style="padding:4px 10px; font-size:0.75rem;" onclick="useItem(${it.id})">Use</button>
+                `;
+                box.appendChild(row);
+            });
+        }
+
+        async function useItem(id) {
+            const res = await api(`/api/inventory/${id}/use`, { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                playChime();
+                alert(data.message);
+                loadProfile();
+                loadInventory();
+            }
+        }
+
+        /* Leaderboard */
+        async function loadLeaderboard() {
+            const res = await api('/api/leaderboard');
+            if (!res.ok) return;
+            const board = await res.json();
+            const box = document.getElementById('lead-list');
+            box.innerHTML = '';
+
+            board.slice(0, 5).forEach(p => {
+                const medal = p.rank === 1 ? '🥇' : (p.rank === 2 ? '🥈' : (p.rank === 3 ? '🥉' : `#${p.rank}`));
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:#060911; padding:10px 14px; border-radius:8px; border:1px solid #1e293b;';
+                row.innerHTML = `
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span style="font-size:1.1rem;">${medal}</span>
+                        <div>
+                            <div style="font-weight:700; font-size:0.9rem;">${p.name || p.username}</div>
+                            <div style="font-size:0.75rem; color:#818cf8;">${p.title}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="color:#38bdf8; font-weight:800; font-size:0.85rem;">Lvl ${p.level}</div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">${p.xp} XP</div>
+                    </div>
+                `;
+                box.appendChild(row);
+            });
+        }
+
+        /* App Initialization */
+        async function initApp() {
+            const meRes = await api('/me');
+            if (meRes.ok) {
+                hideAuthModal();
+                loadProfile();
+                loadQuests();
+                loadShop();
+                loadHistory();
+                loadLeaderboard();
+            } else {
+                showAuthModal();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

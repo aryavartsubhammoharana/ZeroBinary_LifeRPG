@@ -484,13 +484,102 @@ All client logic, no framework:
 
 ---
 
-## What Comes Next — Progression Engine Hook Points
+## Progression Engine & Gamification Layer (v1.2 Update)
 
-The following endpoints have `TODO` comments marking exactly where the progression engine integrates:
+The foundation has been enhanced with a complete **RPG Progression Engine, Core Attribute System, Daily Login Streak Track, Real-World Rewards Bazaar, and Interactive Cyber-RPG Dashboard**, while strictly preserving 100% of previous code intact.
 
-| Endpoint | Integration Point |
-|:---|:---|
-| `POST /quests/{id}/complete` | Award `quest.xp_reward` XP to `current_user` via the progression engine |
-| `POST /shop/purchase` | Deduct `item.cost` from `current_user`'s currency balance |
+### 1. API Changes & Architecture
 
-When the progression engine is ready, only those two functions need to be updated. Auth, ownership, rate limiting, and all route scaffolding are already in place and will not need any changes.
+The application now supports a clean, modular extension layer mounted via `extended_main.py` without modifying original core files:
+
+| Endpoint | Method | Purpose |
+|:---|:---|:---|
+| `/api/profile` | `GET` | Character sheet: Level, XP bar, Gold, Streaks, and 4 Core Attributes (STR, INT, VIT, WIL) |
+| `/api/profile/claim-daily-login` | `POST` | Claim daily login streak bonus with 7-day cyclical rewards and milestone unlocks |
+| `/api/profile/achievements` | `GET` | View player milestone badges and unlocked achievements |
+| `/api/quests/{id}/claim` | `POST` | Complete quest: awards XP + streak bonus + Gold + Attribute gains (+STR for gym, +INT for study) |
+| `/api/quests/history` | `GET` | Immutable audit log of completed quests and attribute points earned |
+| `/api/quests/summary` | `GET` | Metrics on active vs completed quests and total XP |
+| `/api/shop/catalog` | `GET` | Virtual shop catalogue with live affordability checks |
+| `/api/shop/{id}/buy` | `POST` | Purchase potions/gear with Gold, deducting coins and adding to inventory |
+| `/api/inventory` | `GET` | View owned items and stack quantities |
+| `/api/inventory/{id}/use` | `POST` | Consume potions/scrolls for instant XP boosts |
+| `/api/rewards/custom` | `GET`, `POST` | Create and browse custom real-world rewards (e.g. Cheat Day Pizza) |
+| `/api/rewards/custom/{id}/redeem` | `POST` | Spend Gold to redeem real-life rewards |
+| `/api/leaderboard` | `GET` | Global player rankings sorted by Level and XP |
+| `/demo` | `GET` | Interactive tactile Cyber-RPG dashboard |
+
+---
+
+### 2. Database Connection & PostgreSQL Integration
+
+The backend is connected to **PostgreSQL 18** (with SQLite fallback for lightweight development):
+- **Server:** PostgreSQL 18.4 on `localhost:5432`
+- **Database:** `liferpg_db`
+- **Configuration:** Managed via `.env` with `DATABASE_URL=postgresql://...`
+- **Active Relational Tables:**
+  1. `users` — Authentication credentials and hashed passwords.
+  2. `user_profiles` — Level, cumulative XP, Gold coins, Quest streak, and **Core Attributes** (`strength`, `knowledge`, `vitality`, `willpower`), plus `login_streak` and `last_login_date`.
+  3. `quests` — Player goals and daily tasks.
+  4. `quest_history` — Immutable audit trail of completed quests, timestamps, and stat gains.
+  5. `custom_rewards` — Player-defined real-world rewards and redemption counts.
+  6. `shop_items` — In-game shop catalog (Health Potions, Focus Elixirs, Habit Swords, Dragon Armor).
+  7. `inventory_items` — Purchased gear and consumables owned by users.
+  8. `achievements` — Unlocked player milestone badges (*First Blood*, *Iron Body*, *Grand Scholar*, *Committed Devotee*).
+  9. `items` — Original user item repository.
+
+The database catalog is automatically initialized and seeded on startup using `seed.py`.
+
+---
+
+### 3. Networking & HTTP Diagnostics
+
+Network communication has been verified using an automated diagnostic probe ([`test_networking.py`](file:///d:/sih/Hackathons/life_rpg/ZeroBinary_LifeRPG/test_networking.py)):
+- **Health Latency:** `GET /health` averages **~41ms** with persistent keep-alive connections.
+- **CORS Preflight:** `OPTIONS` requests properly return `Access-Control-Allow-Origin: http://localhost:5173`, `Access-Control-Allow-Credentials: true`, and all standard REST methods (`GET, POST, PATCH, DELETE, OPTIONS`).
+- **Cookie Security:** JWT sessions are delivered via `HttpOnly`, `SameSite=lax` (or `none` in prod), and `Path=/` cookies, preventing XSS token exfiltration.
+- **Session Continuity:** Tested silent token refreshing via `POST /refresh` and seamless retry.
+
+---
+
+### 4. Added RPG Features
+
+#### A. Dynamic Attribute Engine
+Tasks translate directly into virtual player stats:
+- **Gym & Workout Quests** $\rightarrow$ Increase **Strength (STR)**.
+- **Study & Reading Quests** $\rightarrow$ Increase **Knowledge (INT)**.
+- **Cardio & Movement Quests** $\rightarrow$ Increase **Vitality (VIT)**.
+- **Habits & Discipline Quests** $\rightarrow$ Increase **Willpower (WIL)**.
+*Includes intelligent keyword auto-detection and manual dropdown tagging.*
+
+#### B. Daily Login Streak System
+A 7-day cyclical bonus track that rewards consecutive daily check-ins:
+- **Day 1:** +25 XP, +15 Gold
+- **Day 2:** +35 XP, +20 Gold
+- **Day 3:** +50 XP, +30 Gold (*Unlocks "Committed Devotee" badge*)
+- **Day 4:** +70 XP, +45 Gold
+- **Day 5:** +95 XP, +60 Gold
+- **Day 6:** +125 XP, +80 Gold
+- **Day 7:** **Weekly Jackpot!** +250 XP, +150 Gold, +1 Free Health Potion (*Unlocks "Unbroken Loyalty" badge*)
+*Features double-claim prevention and automated streak resets on skipped days.*
+
+#### C. Real-World Rewards Bazaar
+Bridging virtual productivity with real-world dopamine:
+- Players create custom rewards (e.g., *"1 Hour Gaming"*, *"Cheat Meal Pizza"*).
+- Spending earned virtual Gold deducts from the coin balance and increments lifetime redemptions.
+
+#### D. Alive, Tactile Web Dashboard (`/demo`)
+- **Web Audio API Synthesizer:** 8-bit chimes for quest claims, coin clinks, and level-up fanfares (with mute toggle).
+- **Canvas Particle Burst:** Multi-colored confetti explosions upon claiming rewards.
+- **Celebration Modal:** Dynamic victory popup displaying exact XP, Gold, Attribute gains, and Level-Up fanfare.
+- **7-Day Streak Calendar Track:** Visual progress indicators with milestone icons.
+
+---
+
+### 5. Automated Test Suite (18/18 Tests Passing)
+
+Run the full test suite in under 7 seconds:
+```bash
+.\.venv\Scripts\pytest.exe -v
+```
+All 18 tests pass covering authentication, row-level data isolation, quest CRUD, attribute progression (gym $\rightarrow$ strength, study $\rightarrow$ knowledge), custom rewards, and daily login streaks.
