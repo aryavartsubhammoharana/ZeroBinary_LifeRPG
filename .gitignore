@@ -1,0 +1,38 @@
+# ─── Secrets ─────────────────────────────────────────────────────────────────
+# NEVER commit the real .env — copy .env.example and fill in values locally
+.env
+
+# ─── Local database ───────────────────────────────────────────────────────────
+sql_app.db
+
+# ─── Python cache ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ─── Distribution / build ─────────────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ─── Virtual environments ─────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ─── Testing ──────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ─── Editor and OS ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: liferpg_user
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: liferpg_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liferpg_user -d liferpg_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://liferpg_user:changeme@db:5432/liferpg_db
+      JWT_SECRET_KEY: replace_with_a_long_random_secret_key
+      FRONTEND_ORIGIN: http://localhost:5173
+      APP_ENV: development
+      USE_BAAS: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeRPG Auth</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container" id="auth-container">
+        <h2>LifeRPG</h2>
+        <div class="tabs">
+            <button class="active" onclick="switchTab('login')">Login</button>
+            <button onclick="switchTab('register')">Register</button>
+        </div>
+
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <input type="text" id="login-identifier" placeholder="Email or Username" required>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <button type="submit">Login</button>
+            <p id="login-error" class="error"></p>
+        </form>
+
+        <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+            <input type="text" id="reg-name" placeholder="Full Name" required>
+            <div class="form-row">
+                <input type="email" id="reg-email" placeholder="Email" required>
+                <div class="input-wrap">
+                    <input type="text" id="reg-username" placeholder="Username" required>
+                    <div id="username-indicator" class="username-status"></div>
+                </div>
+            </div>
+            <div class="form-row">
+                <input type="password" id="reg-password" placeholder="Password" required>
+                <input type="password" id="reg-confirm-password" placeholder="Confirm Password" required>
+            </div>
+            <div id="bitwise-indicator" class="bitwise-status"></div>
+            <button type="submit">Register</button>
+            <p id="reg-error" class="error"></p>
+        </form>
+    </div>
+
+    <div class="container hidden" id="app-container">
+        <h2>Welcome, <span id="user-display"></span>!</h2>
+        <p id="user-details" class="user-subtext"></p>
+        <button onclick="logout()">Logout</button>
+        
+        <div class="data-section">
+            <h3>Your Private Items</h3>
+            <p class="subtitle">Only you can see this data</p>
+            
+            <form id="item-form" onsubmit="createItem(event)">
+                <input type="text" id="item-title" placeholder="New item title" required>
+                <button type="submit">Add Item</button>
+            </form>
+
+            <ul id="items-list"></ul>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
