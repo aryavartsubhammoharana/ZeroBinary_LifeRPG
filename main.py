@@ -278,3 +278,41 @@ def purchase_item(payload: ShopPurchase, db: Session = Depends(get_db), current_
     if not item:
         raise HTTPException(status_code=404, detail="Shop item not found")
     return {"message": f"Purchased '{item.name}'", "cost": item.cost, "item_id": item.id}
+
+
+# --- RPG Progression, Economy & Inventory Extension Mount ---
+try:
+    from modules import models_ext
+    from modules.routers import (
+        profile_router,
+        quests_ext_router,
+        inventory_router,
+        shop_rpg_router,
+        leaderboard_router,
+        rewards_router,
+    )
+    from seed import seed
+
+    models_ext.Base.metadata.create_all(bind=engine)
+    app.include_router(profile_router)
+    app.include_router(quests_ext_router)
+    app.include_router(inventory_router)
+    app.include_router(shop_rpg_router)
+    app.include_router(leaderboard_router)
+    app.include_router(rewards_router)
+
+    @app.get("/demo")
+    def demo_page():
+        """Serves the interactive LifeRPG demo frontend."""
+        return FileResponse("static/demo.html")
+
+    @app.on_event("startup")
+    def startup_event():
+        """Seed initial shop catalog on app launch."""
+        try:
+            seed()
+        except Exception:
+            pass
+except Exception as _ext_err:
+    print(f"[!] Warning: RPG extension routers could not be loaded: {_ext_err}")
+

@@ -581,6 +581,13 @@
                     <input type="password" id="login-pass" class="input-dark" value="mypassword123" style="width: 100%;" required>
                 </div>
                 <button type="submit" class="btn" style="width: 100%; justify-content: center;">Enter LifeRPG</button>
+                <div style="margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 6px;">⚡ 1-Click Demo Accounts:</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn" style="flex: 1; font-size: 0.75rem; padding: 7px; background: linear-gradient(135deg, #10b981, #059669);" onclick="quickLogin('SASWAT', 'saswat2307')">👤 SASWAT</button>
+                        <button type="button" class="btn btn-outline" style="flex: 1; font-size: 0.75rem; padding: 7px;" onclick="quickLogin('dragon_slayer_99', 'mypassword123')">🗡️ Slayer</button>
+                    </div>
+                </div>
             </form>
 
             <!-- Register Form -->
@@ -763,6 +770,7 @@
                     <button class="subtab-btn active" id="tab-shop-btn" onclick="switchSideTab('shop')">Virtual Shop</button>
                     <button class="subtab-btn" id="tab-custom-btn" onclick="switchSideTab('custom')">Real-Life Rewards</button>
                     <button class="subtab-btn" id="tab-inv-btn" onclick="switchSideTab('inv')">Inventory</button>
+                    <button class="subtab-btn" id="tab-items-btn" onclick="switchSideTab('items')">Private Items</button>
                 </div>
 
                 <!-- Virtual Shop Content -->
@@ -783,6 +791,15 @@
                 <!-- Player Inventory Content -->
                 <div id="side-inv" class="hidden">
                     <div id="inv-items" style="display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Legacy Private Items Content -->
+                <div id="side-items" class="hidden">
+                    <form onsubmit="createLegacyItem(event)" style="display: flex; gap: 6px; margin-bottom: 12px;">
+                        <input type="text" id="legacy-item-title" class="input-dark" placeholder="New private item title..." required>
+                        <button type="submit" class="btn">+ Add</button>
+                    </form>
+                    <div id="legacy-items-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;"></div>
                 </div>
             </div>
         </div>
@@ -1246,12 +1263,54 @@
             document.getElementById('side-shop').classList.add('hidden');
             document.getElementById('side-custom').classList.add('hidden');
             document.getElementById('side-inv').classList.add('hidden');
+            document.getElementById('side-items').classList.add('hidden');
 
             document.getElementById(`side-${tab}`).classList.remove('hidden');
 
             if (tab === 'shop') loadShop();
             if (tab === 'custom') loadCustomRewards();
             if (tab === 'inv') loadInventory();
+            if (tab === 'items') loadLegacyItems();
+        }
+
+        async function quickLogin(u, p) {
+            document.getElementById('login-id').value = u;
+            document.getElementById('login-pass').value = p;
+            const fakeEvent = { preventDefault: () => {} };
+            await handleLogin(fakeEvent);
+        }
+
+        async function loadLegacyItems() {
+            const res = await api('/items');
+            if (!res.ok) return;
+            const items = await res.json();
+            const box = document.getElementById('legacy-items-list');
+            box.innerHTML = '';
+            if (items.length === 0) {
+                box.innerHTML = '<span style="color:#64748b; font-size:0.8rem; padding:8px;">No private items yet. Add one above!</span>';
+                return;
+            }
+            items.forEach(it => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background:#060911; padding:8px 12px; border-radius:8px; border:1px solid #1e293b; font-size:0.85rem; color:#f1f5f9;';
+                row.textContent = `📦 ${it.title}`;
+                box.appendChild(row);
+            });
+        }
+
+        async function createLegacyItem(e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('legacy-item-title');
+            if (!titleInput.value.trim()) return;
+            const res = await api('/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: titleInput.value.trim() })
+            });
+            if (res.ok) {
+                titleInput.value = '';
+                loadLegacyItems();
+            }
         }
 
         /* Virtual Shop */
