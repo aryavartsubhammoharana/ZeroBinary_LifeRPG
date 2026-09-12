@@ -3,64 +3,1955 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeRPG Auth</title>
+    <title>LifeRPG — Deep Retro Character Creator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Retro Pixel RPG Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Silkscreen:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-    <div class="container" id="auth-container">
-        <h2>LifeRPG</h2>
-        <div class="tabs">
-            <button class="active" onclick="switchTab('login')">Login</button>
-            <button onclick="switchTab('register')">Register</button>
-        </div>
+<body class="rpg-body">
+    <!-- Background grid -->
+    <div class="pixel-bg-grid"></div>
 
-        <form id="login-form" onsubmit="handleLogin(event)">
-            <input type="text" id="login-identifier" placeholder="Email or Username" required>
-            <input type="password" id="login-password" placeholder="Password" required>
-            <button type="submit">Login</button>
-            <p id="login-error" class="error"></p>
-        </form>
+    <div id="main-viewport">
 
-        <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
-            <input type="text" id="reg-name" placeholder="Full Name" required>
-            <div class="form-row">
-                <input type="email" id="reg-email" placeholder="Email" required>
-                <div class="input-wrap">
-                    <input type="text" id="reg-username" placeholder="Username" required>
-                    <div id="username-indicator" class="username-status"></div>
+        <!-- TOP RPG RESOURCE BAR (Reference Style) -->
+        <nav class="rpg-resource-bar" id="rpg-resource-bar">
+            <div class="resource-group">
+                <div class="resource-chip gold-chip" title="Your RPG Gold Balance">
+                    <span class="res-icon">🪙</span>
+                    <span class="res-val" id="top-gold-display">1,000</span>
+                    <span class="res-add" onclick="showGoldTip()">+</span>
+                </div>
+                <div class="resource-chip energy-chip" title="Energy Points">
+                    <span class="res-icon">⚡</span>
+                    <span class="res-val" id="top-energy-display">100/100</span>
+                </div>
+                <div class="resource-chip health-chip" title="Health Points">
+                    <span class="res-icon">❤️</span>
+                    <span class="res-val" id="top-health-display">100/100</span>
                 </div>
             </div>
-            <div class="form-row">
-                <input type="password" id="reg-password" placeholder="Password" required>
-                <input type="password" id="reg-confirm-password" placeholder="Confirm Password" required>
-            </div>
-            <div id="bitwise-indicator" class="bitwise-status"></div>
-            <button type="submit">Register</button>
-            <p id="reg-error" class="error"></p>
-        </form>
-    </div>
 
-    <div class="container hidden" id="app-container">
-        <h2>Welcome, <span id="user-display"></span>!</h2>
-        <p id="user-details" class="user-subtext"></p>
-        <button onclick="logout()">Logout</button>
-        
-        <div class="data-section">
-            <h3>Your Private Items</h3>
-            <p class="subtitle">Only you can see this data</p>
-            
-            <form id="item-form" onsubmit="createItem(event)">
-                <input type="text" id="item-title" placeholder="New item title" required>
-                <button type="submit">Add Item</button>
+            <div class="top-nav-actions">
+                <button type="button" class="pixel-btn btn-sm btn-gold" onclick="openProgressionModal()">⭐ ROADMAP</button>
+                <button type="button" class="pixel-btn btn-sm btn-slate" onclick="toggleSoundFx()" id="btn-sound-toggle">🔊 SFX ON</button>
+                <button type="button" class="pixel-btn btn-sm btn-slate" id="btn-logout-top" onclick="logout()" style="display:none;">LOGOUT</button>
+            </div>
+        </nav>
+
+        <!-- AUTH MODAL -->
+        <div class="rpg-modal-frame hidden" id="auth-container">
+            <div class="frame-chain chain-left"></div>
+            <div class="frame-chain chain-right"></div>
+            <div class="frame-vines vine-tl"></div>
+            <div class="frame-vines vine-tr"></div>
+            <div class="frame-vines vine-bl"></div>
+            <div class="frame-vines vine-br"></div>
+
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">LIFERPG GATEWAY</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="tabs pixel-tabs">
+                <button class="pixel-btn tab-btn active" onclick="switchTab('login')">LOGIN</button>
+                <button class="pixel-btn tab-btn" onclick="switchTab('register')">REGISTER</button>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="pixel-input-group">
+                    <label>WARRIOR IDENTIFIER</label>
+                    <input type="text" id="login-identifier" placeholder="Email or Username" required>
+                </div>
+                <div class="pixel-input-group">
+                    <label>SECRET PASSPHRASE</label>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="pixel-btn btn-green btn-large">ENTER REALM</button>
+                <button type="button" class="pixel-btn btn-cyan" onclick="enterAsGuest()">PLAY AS GUEST</button>
+                <p id="login-error" class="error pixel-error"></p>
             </form>
 
-            <ul id="items-list"></ul>
+            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+                <div class="pixel-input-group">
+                    <label>HERO NAME</label>
+                    <input type="text" id="reg-name" placeholder="Full Name" required>
+                </div>
+                <div class="form-row">
+                    <div class="pixel-input-group flex-1">
+                        <label>EMAIL</label>
+                        <input type="email" id="reg-email" placeholder="Email" required>
+                    </div>
+                    <div class="pixel-input-group flex-1">
+                        <label>USERNAME</label>
+                        <input type="text" id="reg-username" placeholder="Username" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="pixel-input-group flex-1">
+                        <label>PASSWORD</label>
+                        <input type="password" id="reg-password" placeholder="Password (min 8)" required>
+                    </div>
+                    <div class="pixel-input-group flex-1">
+                        <label>CONFIRM</label>
+                        <input type="password" id="reg-confirm-password" placeholder="Confirm" required>
+                    </div>
+                </div>
+                <button type="submit" class="pixel-btn btn-green btn-large">FORGE ACCOUNT</button>
+                <p id="reg-error" class="error pixel-error"></p>
+            </form>
+        </div>
+
+        <!-- MAIN CHARACTER CREATOR (Clean, Bit Heroes Retro Layout) -->
+        <div class="creator-container" id="creator-container">
+            <!-- Suspension Chains & Hanging Vines -->
+            <div class="creator-hanging-chain chain-l"></div>
+            <div class="creator-hanging-chain chain-r"></div>
+            <div class="frame-vines vine-tl"></div>
+            <div class="frame-vines vine-tr"></div>
+            <div class="frame-vines vine-bl"></div>
+            <div class="frame-vines vine-br"></div>
+
+            <!-- Frame Header -->
+            <div class="rpg-header-plate creator-header">
+                <span class="bolt bolt-l"></span>
+                <h1 class="pixel-title">CUSTOMIZE</h1>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <!-- 2-Column Clean Customizer Layout -->
+            <div class="creator-layout-clean">
+
+                <!-- LEFT COLUMN: CONTROLS & STEPPERS -->
+                <div class="controls-column">
+                    
+                    <!-- Mode Switcher: Classic Stepper vs Studio Grids -->
+                    <div class="view-mode-tabs">
+                        <button type="button" class="mode-tab active" id="tab-mode-steppers" onclick="switchControlView('steppers')">⚡ STEPPER CONTROLS</button>
+                        <button type="button" class="mode-tab" id="tab-mode-studio" onclick="switchControlView('studio')">🎨 PALETTE & GRIDS</button>
+                    </div>
+
+                    <!-- VIEW 1: CLEAN STEPPER LIST (Reference Style) -->
+                    <div class="control-view-panel" id="view-steppers">
+                        
+                        <!-- GENDER -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">GENDER</span>
+                            <div class="gender-btn-group">
+                                <button type="button" class="gender-btn active" data-gender="M" title="Male" onclick="setGender('M')">M</button>
+                                <button type="button" class="gender-btn" data-gender="X" title="All / Non-Binary" onclick="setGender('X')">X</button>
+                                <button type="button" class="gender-btn" data-gender="F" title="Female" onclick="setGender('F')">F</button>
+                            </div>
+                        </div>
+
+                        <!-- NAME -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">NAME</span>
+                            <input type="text" class="clean-name-input" id="char-name-input" maxlength="20" minlength="2" value="GSJustin" placeholder="Enter name..." oninput="onNameChange(this.value)">
+                        </div>
+
+                        <!-- LIFESTYLE PRESET -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">LIFESTYLE</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepLifestyle(-1)">◀</button>
+                                <span class="stepper-val" id="lifestyle-display">Balanced Lifestyle</span>
+                                <button type="button" class="stepper-arrow" onclick="stepLifestyle(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- PERSONAL STYLE -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">STYLE</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepStyle(-1)">◀</button>
+                                <span class="stepper-val" id="style-display">Casual</span>
+                                <button type="button" class="stepper-arrow" onclick="stepStyle(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- SKIN TONE (with Color Square Preview) -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">SKIN</span>
+                            <div class="stepper-row swatch-stepper">
+                                <button type="button" class="stepper-arrow" onclick="stepSkin(-1)">◀</button>
+                                <div class="stepper-swatch-box">
+                                    <div class="stepper-color-square" id="skin-preview-square" style="background:#f5c29a;"></div>
+                                </div>
+                                <button type="button" class="stepper-arrow" onclick="stepSkin(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- HAIR STYLE -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">HAIR STYLE</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepHairStyle(-1)">◀</button>
+                                <span class="stepper-val" id="hair-style-val">Textured crop</span>
+                                <button type="button" class="stepper-arrow" onclick="stepHairStyle(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- HAIR COLOR (with Color Square Preview) -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">HAIR COLOR</span>
+                            <div class="stepper-row swatch-stepper">
+                                <button type="button" class="stepper-arrow" onclick="stepHairColor(-1)">◀</button>
+                                <div class="stepper-swatch-box">
+                                    <div class="stepper-color-square" id="hair-preview-square" style="background:#3b2219;"></div>
+                                </div>
+                                <button type="button" class="stepper-arrow" onclick="stepHairColor(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- TOP / OUTFIT -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">TOP</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepTop(-1)">◀</button>
+                                <span class="stepper-val" id="top-val">Hoodie</span>
+                                <button type="button" class="stepper-arrow" onclick="stepTop(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- BOTTOM -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">BOTTOM</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepBottom(-1)">◀</button>
+                                <span class="stepper-val" id="bottom-val">Joggers</span>
+                                <button type="button" class="stepper-arrow" onclick="stepBottom(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- SHOES -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">SHOES</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepShoes(-1)">◀</button>
+                                <span class="stepper-val" id="shoes-val">Sneakers</span>
+                                <button type="button" class="stepper-arrow" onclick="stepShoes(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- ACCESSORY -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">GEAR</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepMainAccessory(-1)">◀</button>
+                                <span class="stepper-val" id="main-acc-val">Backpack</span>
+                                <button type="button" class="stepper-arrow" onclick="stepMainAccessory(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- AURA -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">AURA</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepAura(-1)">◀</button>
+                                <span class="stepper-val" id="aura-val">⚡ Energetic</span>
+                                <button type="button" class="stepper-arrow" onclick="stepAura(1)">▶</button>
+                            </div>
+                        </div>
+
+                        <!-- COMPANION -->
+                        <div class="clean-control-row">
+                            <span class="clean-label">PET</span>
+                            <div class="stepper-row">
+                                <button type="button" class="stepper-arrow" onclick="stepCompanion(-1)">◀</button>
+                                <span class="stepper-val" id="companion-val">🐕 Dog</span>
+                                <button type="button" class="stepper-arrow" onclick="stepCompanion(1)">▶</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- VIEW 2: EXPANDED STUDIO (PALETTES & DETAILED GRIDS) -->
+                    <div class="control-view-panel hidden" id="view-studio">
+                        <div class="studio-section">
+                            <span class="studio-title">CURATED THEME PALETTE</span>
+                            <div class="palette-grid" id="palette-grid"></div>
+                        </div>
+                        <div class="studio-section">
+                            <span class="studio-title">FACIAL EXPRESSION</span>
+                            <div class="grid-selector grid-4" id="expression-grid"></div>
+                        </div>
+                        <div class="studio-section">
+                            <span class="studio-title">BODY TYPE & BUILD</span>
+                            <div class="grid-selector grid-3" id="bodytype-grid"></div>
+                        </div>
+                        <div class="studio-section">
+                            <span class="studio-title">POSE</span>
+                            <div class="grid-selector grid-4" id="pose-grid"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: PIXEL ART SHOWCASE STAGE -->
+                <div class="preview-column">
+                    <div class="preview-stage-container">
+                        <!-- Top Info Ribbon -->
+                        <div class="preview-badge-row">
+                            <span class="lvl-tag">LVL <span id="preview-level">1</span></span>
+                            <span class="gold-tag">🪙 <span id="preview-gold">1,000</span> Gold</span>
+                        </div>
+                        
+                        <div class="stage-name" id="preview-hero-name">GSJustin</div>
+                        <div class="stage-title" id="preview-hero-title">"The Beginner"</div>
+
+                        <!-- Canvas Box -->
+                        <div class="pixel-canvas-frame">
+                            <div class="aura-particles-layer" id="aura-particles-layer"></div>
+                            <canvas id="rpg-avatar-canvas" width="220" height="260"></canvas>
+                            <div class="ground-shadow"></div>
+                        </div>
+
+                        <!-- Attributes Matrix -->
+                        <div class="clean-stats-row">
+                            <div class="c-stat"><span>HP</span> 100</div>
+                            <div class="c-stat"><span>NRG</span> 100</div>
+                            <div class="c-stat"><span>FOC</span> 50</div>
+                            <div class="c-stat"><span>DIS</span> 10</div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Action Buttons (Reference: RANDOM & CREATE) -->
+                    <div class="clean-actions-row">
+                        <button type="button" class="pixel-btn btn-cyan btn-chunky" onclick="randomizeCharacter()">
+                            RANDOM
+                        </button>
+                        <button type="button" class="pixel-btn btn-green btn-chunky" onclick="beginMyJourney()">
+                            ⚔ BEGIN MY JOURNEY
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MAIN LIFE RPG ADVENTURE / WORLD DASHBOARD SCREEN (ChronoQuest Aesthetic) -->
+        <div class="adventure-dashboard-container hidden" id="adventure-screen">
+            
+            <!-- Top Adventure Header HUD Bar -->
+            <header class="adv-top-bar">
+                <div class="adv-brand">
+                    <span class="adv-logo-icon">⚔️</span>
+                    <div class="adv-logo-text">
+                        <h1 class="adv-title">CHRONOQUEST</h1>
+                        <span class="adv-tagline">REAL LIFE • REAL XP</span>
+                    </div>
+                </div>
+
+                <div class="adv-hud-stats">
+                    <!-- Music Player Hub Button -->
+                    <button type="button" class="hud-music-btn" id="hud-music-btn" onclick="openMusicModal()" title="Open Music Player & Lo-Fi Synthesizer">
+                        <span class="music-icon">🎵</span>
+                        <span class="music-title-mini" id="hud-music-track-title">8-Bit Lo-Fi</span>
+                        <div class="music-eq-mini">
+                            <span class="music-eq-bar"></span>
+                            <span class="music-eq-bar"></span>
+                            <span class="music-eq-bar"></span>
+                        </div>
+                    </button>
+
+                    <!-- Sound Toggle Button -->
+                    <button type="button" class="hud-sound-btn" id="hud-sound-btn" onclick="toggleSoundFx()" title="Toggle Sound SFX">🔊</button>
+
+                    <!-- XP Progress Diamond Chip -->
+                    <div class="adv-hud-chip xp-chip" title="Total Real-Life Experience">
+                        <span class="hud-icon">🔷</span>
+                        <div class="hud-data">
+                            <span class="hud-label">XP</span>
+                            <span class="hud-val" id="adv-xp-text">0 / 100</span>
+                        </div>
+                        <div class="hud-bar-mini">
+                            <div class="hud-bar-fill" id="adv-xp-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Gold Coin Chip -->
+                    <div class="adv-hud-chip gold-chip" title="Gold Earned from Completed Quests">
+                        <span class="hud-icon">🪙</span>
+                        <div class="hud-data">
+                            <span class="hud-label">GOLD</span>
+                            <span class="hud-val" id="adv-gold-text">1,000</span>
+                        </div>
+                    </div>
+
+                    <!-- Streak Fire Chip -->
+                    <div class="adv-hud-chip streak-chip" title="Daily Consistency Streak">
+                        <span class="hud-icon">🔥</span>
+                        <div class="hud-data">
+                            <span class="hud-label">STREAK</span>
+                            <span class="hud-val" id="adv-streak-text">1 DAY</span>
+                        </div>
+                    </div>
+
+                    <!-- Profile Summary Box -->
+                    <div class="adv-player-badge">
+                        <div class="player-avatar-box">
+                            <canvas id="adv-mini-avatar" width="34" height="34"></canvas>
+                        </div>
+                        <div class="player-info">
+                            <span class="player-name" id="adv-hero-name">GSJustin</span>
+                            <span class="player-level" id="adv-hero-lvl">LV 01 WARRIOR</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Adventure Viewport (Full-Width Content + Bottom Navigation Dock) -->
+            <div class="adv-main-layout">
+
+                <!-- MAIN FULL-WIDTH CONTENT COLUMN -->
+                <main class="adv-content-area">
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 1: IMMERSIVE LIFERPG FULL-SCREEN GAME WORLD VIEW        -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view active" id="adv-tab-world">
+                        <div class="adv-world-fullscreen-viewport" id="adv-world-frame">
+                            <!-- Floating World Overlay Controls (Top Left & Top Right) -->
+                            <div class="world-floating-hud-overlay">
+                                <div class="wf-zone-pill">
+                                    <span class="wf-zone-icon">🗺️</span>
+                                    <div class="wf-zone-text">
+                                        <span class="wf-zone-crumb">OVERWORLD REALM</span>
+                                        <h2 class="wf-zone-title" id="adv-zone-name">HOMESTEAD • SCHOLAR GROVE • LEVEL 01</h2>
+                                    </div>
+                                </div>
+
+                                <div class="wf-controls-group">
+                                    <!-- Weather & Time of Day Switchers -->
+                                    <div class="wf-env-toggles">
+                                        <button type="button" class="wf-btn active" id="tod-btn-day" onclick="window.worldEngine && window.worldEngine.setTimeOfDay('day')" title="Day Mode">☀️</button>
+                                        <button type="button" class="wf-btn" id="tod-btn-sunset" onclick="window.worldEngine && window.worldEngine.setTimeOfDay('sunset')" title="Sunset Mode">🌇</button>
+                                        <button type="button" class="wf-btn" id="tod-btn-night" onclick="window.worldEngine && window.worldEngine.setTimeOfDay('night')" title="Night Mode">🌙</button>
+                                        <span class="wf-divider"></span>
+                                        <button type="button" class="wf-btn active" id="wth-btn-clear" onclick="window.worldEngine && window.worldEngine.setWeather('clear')" title="Clear Sky">🌤️</button>
+                                        <button type="button" class="wf-btn" id="wth-btn-rain" onclick="window.worldEngine && window.worldEngine.setWeather('rain')" title="Rain Weather">🌧️</button>
+                                        <button type="button" class="wf-btn" id="wth-btn-snow" onclick="window.worldEngine && window.worldEngine.setWeather('snow')" title="Snow Weather">❄️</button>
+                                    </div>
+
+                                    <div class="wf-nav-tip">
+                                        <span>🎮 WASD / CLICK TO WALK</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Minimap Floating Radar Box (Positioned safely above bottom bar) -->
+                            <div class="minimap-floating-box" id="adv-minimap-container" title="World Radar (Click to Travel)">
+                                <div class="mm-header">
+                                    <span class="mm-title">📡 RADAR</span>
+                                    <span class="mm-dot">● LIVE</span>
+                                </div>
+                                <canvas id="adv-minimap-canvas" width="130" height="90"></canvas>
+                            </div>
+
+                            <!-- Floating Celebration & Reward Particle Layer -->
+                            <div class="floating-text-layer" id="floating-text-layer"></div>
+
+                            <!-- The Large Interactive 2D/2.5D LifeRPG World Canvas -->
+                            <canvas id="adv-world-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB: MY HOME & BASE BUILDING SYSTEM ("BUILD YOUR LIFE")   -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-home">
+                        <div class="home-view-container">
+                            <!-- Home Header Plate with Progression -->
+                            <div class="home-header-plate">
+                                <div class="home-title-col">
+                                    <div class="home-crumb">MY BASE / REAL-LIFE ARCHITECTURE</div>
+                                    <h2 class="home-name-heading" id="home-name-heading">🏠 MY HOME BASE</h2>
+                                    <div class="home-level-tag">
+                                        <span class="hl-badge" id="home-hud-level">LVL 1</span>
+                                        <span class="hl-title" id="home-hud-title">Starter Hut</span>
+                                    </div>
+                                </div>
+
+                                <div class="home-economy-stats">
+                                    <div class="home-eco-chip gold" title="Coins available for base building">
+                                        <span class="he-icon">🪙</span>
+                                        <div class="he-info">
+                                            <span class="he-label">COINS</span>
+                                            <span class="he-val" id="home-hud-coins">1,000 G</span>
+                                        </div>
+                                    </div>
+                                    <div class="home-eco-chip cxp" title="Construction XP earned from quests">
+                                        <span class="he-icon">⭐</span>
+                                        <div class="he-info">
+                                            <span class="he-label">BUILD XP</span>
+                                            <span class="he-val" id="home-hud-cxp">100 CXP</span>
+                                        </div>
+                                    </div>
+                                    <div class="home-progress-box" title="Home Base Expansion Level">
+                                        <div class="hp-label-row">
+                                            <span>HOME PROGRESS</span>
+                                            <span id="home-xp-val">0 / 100 XP</span>
+                                        </div>
+                                        <div class="home-bar-wrap">
+                                            <div class="home-bar-fill" id="home-xp-fill-bar" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Base Canvas Viewport -->
+                            <div class="home-canvas-viewport">
+                                <canvas id="home-canvas" width="864" height="384"></canvas>
+                                
+                                <!-- Floating Quick Actions Toolbar -->
+                                <div class="home-toolbar-dock">
+                                    <button type="button" class="pixel-btn btn-sm btn-cyan" id="btn-toggle-build-mode" onclick="window.homeEngine.toggleBuildMode()">🔨 BUILD MODE</button>
+                                    <button type="button" class="pixel-btn btn-sm btn-gold" onclick="openHomeShopModal()">🏪 HOME SHOP</button>
+                                    <button type="button" class="pixel-btn btn-sm btn-green" onclick="openRoomBlueprintsModal()">🛏️ ROOM BLUEPRINTS</button>
+                                    <button type="button" class="pixel-btn btn-sm btn-slate" onclick="window.homeEngine.initStarterHome()">📷 RESET BASE</button>
+                                </div>
+
+                                <!-- Dynamic Categorized Build Mode Dock (Active when in Build Mode) -->
+                                <div class="home-build-dock hidden" id="home-build-toolbar">
+                                    <div class="build-palette-header">
+                                        <!-- Left: Action Tools -->
+                                        <div class="build-tool-group">
+                                            <button type="button" class="build-tool-btn active" id="tool-btn-block" onclick="window.homeEngine.setTool('block')">🧱 PLACE</button>
+                                            <button type="button" class="build-tool-btn" id="tool-btn-remove" onclick="window.homeEngine.setTool('remove')">🗑️ REMOVE</button>
+                                            <button type="button" class="build-tool-btn" onclick="window.homeEngine.undo()" title="Undo">↩️ UNDO</button>
+                                            <button type="button" class="build-tool-btn" onclick="window.homeEngine.redo()" title="Redo">🔁 REDO</button>
+                                        </div>
+
+                                        <!-- Right: Category Tabs Filter -->
+                                        <div class="build-category-tabs">
+                                            <button type="button" class="b-cat-tab active" onclick="switchBuildCategory('walls')">🧱 Walls</button>
+                                            <button type="button" class="b-cat-tab" onclick="switchBuildCategory('floors')">🪵 Floors</button>
+                                            <button type="button" class="b-cat-tab" onclick="switchBuildCategory('roofs')">🏠 Roofs</button>
+                                            <button type="button" class="b-cat-tab" onclick="switchBuildCategory('doors_windows')">🪟 Openings</button>
+                                            <button type="button" class="b-cat-tab" onclick="switchBuildCategory('furniture')">🛋️ Furniture</button>
+                                            <button type="button" class="b-cat-tab" onclick="switchBuildCategory('gym_study')">🏋️ Gym & Study</button>
+                                            <button type="button" class="b-cat-tab" onclick="switchBuildCategory('all')">🌟 All</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Main Build Deck: Live Preview Card + Horizontal Item Carousel -->
+                                    <div class="build-deck-split">
+                                        <!-- Selected Item Live Preview Card -->
+                                        <div class="build-item-preview-card" id="build-item-preview-card">
+                                            <div class="bipc-icon-box" id="bipc-icon">🪵</div>
+                                            <div class="bipc-details">
+                                                <span class="bipc-title" id="build-cur-item-name">Wood Plank Wall</span>
+                                                <div class="bipc-cost-row">
+                                                    <span class="bipc-cost-gold" id="bipc-gold">🪙 20 Coins</span>
+                                                    <span class="bipc-cost-cxp" id="bipc-cxp">⭐ 5 Build XP</span>
+                                                </div>
+                                                <span class="bipc-perk" id="bipc-perk">+10 Home XP on placement</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Categorized Quick Catalog Scroll Carousel -->
+                                        <div class="build-quick-items" id="build-quick-items-list">
+                                            <!-- Quick item buttons populated dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Property Summary Banner -->
+                            <div class="home-property-banner">
+                                <div class="hpb-info">
+                                    <h4 class="hpb-title">🏰 BASE EVOLUTION & REAL-LIFE IMPACT</h4>
+                                    <p class="hpb-desc">Every study session, completed workout, and hydrated habit earns Coins & Construction XP to expand your mansion, garage, and trophy room.</p>
+                                </div>
+                                <div class="hpb-rooms-chips" id="home-unlocked-rooms-tags">
+                                    <span class="room-pill active">🛏️ Bedroom</span>
+                                    <span class="room-pill">📚 Study</span>
+                                    <span class="room-pill">🏋️ Gym</span>
+                                    <span class="room-pill">🚲 Garage</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 2: STATS / CHARACTER PROGRESSION                      -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-stats">
+                        <div class="tab-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">STATS / CHARACTER PROGRESSION</span>
+                                <h2 class="tab-main-title">REAL-LIFE ATTRIBUTES & MASTERY</h2>
+                            </div>
+                            <button type="button" class="pixel-btn btn-sm btn-gold" onclick="openProgressionModal()">⭐ ROADMAP</button>
+                        </div>
+
+                        <!-- Top 4-Metric Progression KPI Row -->
+                        <div class="stats-overview-banner">
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">🔷</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">TOTAL EXPERIENCE</span>
+                                    <span class="kpi-val" id="stats-tab-xp">0 / 100 XP</span>
+                                </div>
+                            </div>
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">🔥</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">CONSISTENCY STREAK</span>
+                                    <span class="kpi-val" id="stats-tab-streak">1 DAY</span>
+                                </div>
+                            </div>
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">🪙</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">GOLD EARNED</span>
+                                    <span class="kpi-val" id="stats-tab-gold">1,000 G</span>
+                                </div>
+                            </div>
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">🚩</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">JOURNEY MILEAGE</span>
+                                    <span class="kpi-val" id="stats-tab-km">2.0 KM</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2-Column Stats Breakdown Grid -->
+                        <div class="stats-detail-grid">
+                            <!-- Left: Detailed Attribute Rows with Description -->
+                            <div class="adv-panel">
+                                <div class="panel-header">
+                                    <div class="panel-title-group">
+                                        <span class="panel-icon">🧠</span>
+                                        <h3 class="panel-title">CORE ATTRIBUTES</h3>
+                                    </div>
+                                    <span class="badge-count">5 DIMENSIONS</span>
+                                </div>
+
+                                <div class="detailed-stat-list">
+                                    <div class="d-stat-card">
+                                        <div class="d-stat-top">
+                                            <span class="d-stat-title">📖 INT / KNOWLEDGE</span>
+                                            <span class="d-stat-score" id="d-stat-int">15 PTS</span>
+                                        </div>
+                                        <p class="d-stat-desc">Boosted by reading, deep study sessions, coding and creative mastery.</p>
+                                        <div class="stat-bar-track">
+                                            <div class="stat-bar-fill fill-cyan" id="d-bar-int" style="width: 30%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-stat-card">
+                                        <div class="d-stat-top">
+                                            <span class="d-stat-title">🏋️ STR / FITNESS</span>
+                                            <span class="d-stat-score" id="d-stat-str">10 PTS</span>
+                                        </div>
+                                        <p class="d-stat-desc">Boosted by gym workouts, strength training, bodyweight exercises and stamina.</p>
+                                        <div class="stat-bar-track">
+                                            <div class="stat-bar-fill fill-green" id="d-bar-str" style="width: 20%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-stat-card">
+                                        <div class="d-stat-top">
+                                            <span class="d-stat-title">⚡ VIT / VITALITY</span>
+                                            <span class="d-stat-score" id="d-stat-vit">20 PTS</span>
+                                        </div>
+                                        <p class="d-stat-desc">Boosted by hydration, 8+ hours sleep, healthy nutrition and recovery walks.</p>
+                                        <div class="stat-bar-track">
+                                            <div class="stat-bar-fill fill-rose" id="d-bar-vit" style="width: 40%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-stat-card">
+                                        <div class="d-stat-top">
+                                            <span class="d-stat-title">🛡️ WIL / DISCIPLINE</span>
+                                            <span class="d-stat-score" id="d-stat-wil">12 PTS</span>
+                                        </div>
+                                        <p class="d-stat-desc">Boosted by meditation, cold showers, eliminating distractions and habit streaks.</p>
+                                        <div class="stat-bar-track">
+                                            <div class="stat-bar-fill fill-gold" id="d-bar-wil" style="width: 24%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-stat-card">
+                                        <div class="d-stat-top">
+                                            <span class="d-stat-title">💎 FIN / FINANCE</span>
+                                            <span class="d-stat-score" id="d-stat-fin">5 PTS</span>
+                                        </div>
+                                        <p class="d-stat-desc">Boosted by expense tracking, investing, side projects and budgeting.</p>
+                                        <div class="stat-bar-track">
+                                            <div class="stat-bar-fill fill-emerald" id="d-bar-fin" style="width: 10%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Activity Overview & Level Perks -->
+                            <div class="adv-panel">
+                                <div class="panel-header">
+                                    <div class="panel-title-group">
+                                        <span class="panel-icon">📊</span>
+                                        <h3 class="panel-title">ACTIVITY OVERVIEW</h3>
+                                    </div>
+                                    <span class="badge-lvl" id="stats-tab-level-badge">LV 01</span>
+                                </div>
+
+                                <div class="activity-bars-box">
+                                    <div class="act-bar-item">
+                                        <div class="act-label-row">
+                                            <span>Knowledge & Learning</span>
+                                            <span>35%</span>
+                                        </div>
+                                        <div class="act-track"><div class="act-fill fill-cyan" style="width: 35%;"></div></div>
+                                    </div>
+                                    <div class="act-bar-item">
+                                        <div class="act-label-row">
+                                            <span>Fitness & Exercise</span>
+                                            <span>25%</span>
+                                        </div>
+                                        <div class="act-track"><div class="act-fill fill-green" style="width: 25%;"></div></div>
+                                    </div>
+                                    <div class="act-bar-item">
+                                        <div class="act-label-row">
+                                            <span>Vitality & Health</span>
+                                            <span>20%</span>
+                                        </div>
+                                        <div class="act-track"><div class="act-fill fill-rose" style="width: 20%;"></div></div>
+                                    </div>
+                                    <div class="act-bar-item">
+                                        <div class="act-label-row">
+                                            <span>Discipline & Focus</span>
+                                            <span>15%</span>
+                                        </div>
+                                        <div class="act-track"><div class="act-fill fill-gold" style="width: 15%;"></div></div>
+                                    </div>
+                                    <div class="act-bar-item">
+                                        <div class="act-label-row">
+                                            <span>Finance & Wealth</span>
+                                            <span>5%</span>
+                                        </div>
+                                        <div class="act-track"><div class="act-fill fill-emerald" style="width: 5%;"></div></div>
+                                    </div>
+                                </div>
+
+                                <!-- Level Perks Banner -->
+                                <div class="milestone-perk-card">
+                                    <div class="mp-header">
+                                        <span class="mp-tag">NEXT UNLOCK MILESTONE</span>
+                                        <span class="mp-lvl">LVL 05</span>
+                                    </div>
+                                    <div class="mp-title">🚲 BICYCLE TRANSPORT & +500 GOLD</div>
+                                    <p class="mp-desc">"Reach Level 5 by completing real-world quests to unlock your first upgraded vehicle and ride at 1.8x travel speed!"</p>
+                                    <div class="mp-progress-bar">
+                                        <div class="mp-fill" id="stats-milestone-fill" style="width: 20%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 2: QUEST BOARD & FOCUS SPRINT ENGINE (USP 1)         -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-quests">
+
+                        <!-- USP 1 MISSION STATUS BANNER -->
+                        <div class="qb-mission-status-bar" id="qb-mission-status-bar">
+                            <div class="qms-left">
+                                <div class="qms-title-row">
+                                    <span class="qms-icon">⚔️</span>
+                                    <span class="qms-title">TODAY'S MISSION STATUS</span>
+                                    <span class="qms-date" id="qms-date-display">--</span>
+                                </div>
+                                <div class="qms-progress-track">
+                                    <div class="qms-progress-fill" id="qms-xp-bar" style="width: 0%;"></div>
+                                </div>
+                                <div class="qms-progress-label">
+                                    <span id="qms-xp-label">0 XP TODAY</span>
+                                    <span id="qms-xp-target">TARGET: 100 XP</span>
+                                </div>
+                            </div>
+                            <div class="qms-stats-row">
+                                <div class="qms-stat-chip">
+                                    <span class="qms-stat-icon">✓</span>
+                                    <span class="qms-stat-val" id="qms-quests-done">0</span>
+                                    <span class="qms-stat-lbl">QUESTS</span>
+                                </div>
+                                <div class="qms-stat-chip">
+                                    <span class="qms-stat-icon">⏱️</span>
+                                    <span class="qms-stat-val" id="qms-sprints-done">0</span>
+                                    <span class="qms-stat-lbl">SPRINTS</span>
+                                </div>
+                                <div class="qms-stat-chip">
+                                    <span class="qms-stat-icon">🔥</span>
+                                    <span class="qms-stat-val" id="qms-streak">1</span>
+                                    <span class="qms-stat-lbl">STREAK</span>
+                                </div>
+                                <div class="qms-stat-chip gold">
+                                    <span class="qms-stat-icon">🪙</span>
+                                    <span class="qms-stat-val" id="qms-gold-today">0</span>
+                                    <span class="qms-stat-lbl">GOLD TODAY</span>
+                                </div>
+                            </div>
+                            <div class="qms-actions">
+                                <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="openAddQuestModal()">+ FORGE QUEST</button>
+                            </div>
+                        </div>
+
+                        <!-- FOCUS SPRINT ENGINE -->
+                        <div class="focus-timer-banner" id="focus-timer-banner">
+                            <div class="ftb-left">
+                                <span class="ftb-icon">⏱️</span>
+                                <div class="ftb-info">
+                                    <span class="ftb-label">DEEP WORK FOCUS SPRINT</span>
+                                    <span class="ftb-sub" id="ftb-status-text">Select a quest below and hit START SPRINT, or start a free sprint</span>
+                                </div>
+                            </div>
+                            <div class="ftb-center">
+                                <span class="ftb-digits" id="ftb-timer-display">25:00</span>
+                            </div>
+                            <div class="ftb-actions">
+                                <button type="button" class="pixel-btn btn-sm btn-green" id="btn-timer-start" onclick="toggleFocusTimer()">▶ START</button>
+                                <button type="button" class="pixel-btn btn-sm btn-slate" onclick="resetFocusTimer()">↺ RESET</button>
+                                <select id="focus-duration-select" class="pixel-select" onchange="setFocusDuration(this.value); updateSprintRewardPreview();">
+                                    <option value="15">15 Min Sprint</option>
+                                    <option value="25" selected>25 Min Pomodoro</option>
+                                    <option value="45">45 Min Deep Block</option>
+                                    <option value="60">60 Min Monk Mode</option>
+                                </select>
+                            </div>
+                            <div class="ftb-reward-preview">
+                                <span class="ftb-reward-chip xp">+50 XP</span>
+                                <span class="ftb-reward-chip gold">+25G</span>
+                                <span class="ftb-reward-chip cxp">+10 BUILD</span>
+                            </div>
+                        </div>
+
+                        <!-- FILTER TABS BAR -->
+                        <div class="quest-filter-bar">
+                            <button type="button" class="q-filter-btn active" onclick="filterQuestsTab('all', this)">🌐 ALL</button>
+                            <button type="button" class="q-filter-btn" onclick="filterQuestsTab('daily', this)">📅 DAILY</button>
+                            <button type="button" class="q-filter-btn" onclick="filterQuestsTab('habit', this)">🌱 HABITS</button>
+                            <button type="button" class="q-filter-btn" onclick="filterQuestsTab('numeric', this)">🔢 NUMERIC</button>
+                            <button type="button" class="q-filter-btn" onclick="filterQuestsTab('timer', this)">⏱️ TIMERS</button>
+                            <button type="button" class="q-filter-btn" onclick="filterQuestsTab('Study', this)">📚 STUDY</button>
+                            <button type="button" class="q-filter-btn" onclick="filterQuestsTab('Fitness', this)">🏋️ FITNESS</button>
+                            <button type="button" class="q-filter-btn" onclick="filterQuestsTab('completed', this)">✓ DONE</button>
+                        </div>
+
+                        <!-- QUEST CARDS LIST -->
+                        <div class="board-quests-container" id="board-quests-list">
+                            <!-- Populated dynamically by renderBoardQuests() -->
+                        </div>
+
+                        <!-- RECENT QUEST HISTORY -->
+                        <div class="qb-history-section" id="qb-history-section">
+                            <div class="qbh-header">
+                                <span class="qbh-icon">📜</span>
+                                <span class="qbh-title">RECENT COMPLETIONS</span>
+                            </div>
+                            <div class="qbh-list" id="qb-history-list">
+                                <div class="qbh-loading">Loading history...</div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 3: GOAL CAMPAIGNS & MILESTONES (RPG ADVENTURE MAP)   -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-campaigns">
+                        <div class="tab-page-header campaign-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">CAMPAIGNS / LONG-TERM GOALS</span>
+                                <h2 class="tab-main-title">🗺️ RPG CAMPAIGN ADVENTURE MAP</h2>
+                            </div>
+                            <div class="header-actions-group campaign-top-actions">
+                                <button type="button" class="pixel-btn btn-gold btn-large" onclick="openCreateCampaignModal()">⚔️ + NEW CAMPAIGN</button>
+                            </div>
+                        </div>
+
+                        <!-- Active Campaign Selector Pills Row -->
+                        <div class="campaign-nav-tabs-bar" id="campaign-nav-pills">
+                            <!-- Dynamic campaign tab pills -->
+                        </div>
+
+                        <!-- 2-Column RPG Campaign Map & Intel Workspace -->
+                        <div class="campaign-map-workspace" id="campaign-map-workspace">
+                            
+                            <!-- LEFT COLUMN: Connected RPG Adventure Roadmap -->
+                            <div class="campaign-map-viewport" id="campaign-map-viewport">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+
+                            <!-- RIGHT COLUMN: Fixed Campaign Intelligence & Rewards Deck -->
+                            <aside class="campaign-intel-panel" id="campaign-intel-panel">
+                                <!-- Populated dynamically by JS -->
+                            </aside>
+
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 4: VOXEL SHOP & INVENTORY                             -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-shop">
+                        <div class="tab-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">MARKETPLACE / EQUIPMENT</span>
+                                <h2 class="tab-main-title">🎒 VOXEL SHOP & INVENTORY</h2>
+                            </div>
+                            <div class="shop-gold-badge">
+                                <span>🪙 TREASURY:</span>
+                                <span class="shop-gold-amount" id="shop-tab-gold-amount">1,000 G</span>
+                            </div>
+                        </div>
+
+                        <!-- Sub-Navigation: Shop vs Inventory -->
+                        <div class="shop-nav-tabs">
+                            <button type="button" class="shop-nav-tab active" id="s-tab-catalog" onclick="switchShopTab('catalog')">🏪 VOXEL SHOP CATALOG</button>
+                            <button type="button" class="shop-nav-tab" id="s-tab-inventory" onclick="switchShopTab('inventory')">🎒 MY INVENTORY & EQUIPMENT</button>
+                        </div>
+
+                        <!-- Shop Catalog Panel -->
+                        <div class="shop-content-panel" id="shop-panel-catalog">
+                            <div class="shop-category-filters">
+                                <button type="button" class="s-cat-btn active" onclick="filterShopCategory('all', this)">🌟 All Items</button>
+                                <button type="button" class="s-cat-btn" onclick="filterShopCategory('armor', this)">🛡️ Armor & Helms</button>
+                                <button type="button" class="s-cat-btn" onclick="filterShopCategory('clothing', this)">🥋 Robes & Capes</button>
+                                <button type="button" class="s-cat-btn" onclick="filterShopCategory('pets', this)">🐾 Companions</button>
+                                <button type="button" class="s-cat-btn" onclick="filterShopCategory('effects', this)">✨ Particle Auras</button>
+                                <button type="button" class="s-cat-btn" onclick="filterShopCategory('furniture', this)">🛋️ Base Furniture</button>
+                            </div>
+                            <div class="shop-items-grid" id="shop-catalog-grid"></div>
+                        </div>
+
+                        <!-- Inventory Panel -->
+                        <div class="shop-content-panel hidden" id="shop-panel-inventory">
+                            <div class="inventory-loadout-deck">
+                                <h3 class="panel-subtitle">EQUIPPED GEAR</h3>
+                                <div class="loadout-slots-grid" id="inventory-loadout-slots">
+                                    <!-- Dynamic Equipped Slots -->
+                                </div>
+                            </div>
+                            <h3 class="panel-subtitle" style="margin-top: 20px;">BACKPACK ITEMS</h3>
+                            <div class="inventory-items-grid" id="inventory-items-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 5: ACHIEVEMENTS & TROPHY ROOM                         -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-achievements">
+                        <div class="tab-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">MEDALS / LIFETIME MILESTONES</span>
+                                <h2 class="tab-main-title">🏆 ACHIEVEMENTS & TROPHY HALL</h2>
+                            </div>
+                            <div class="achievements-summary-badge">
+                                <span id="achieve-unlocked-ratio">0 / 18 UNLOCKED</span>
+                            </div>
+                        </div>
+
+                        <div class="achievements-grid-container" id="achievements-cards-grid">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 6: LIVE REAL-TIME LEADERBOARD                         -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-leaderboard">
+                        <div class="tab-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">LEADERBOARD / LIVE REALM</span>
+                                <h2 class="tab-main-title">🥇 LIVE ADVENTURER LEADERBOARD</h2>
+                            </div>
+                            <div class="live-stream-badge">
+                                <span class="live-dot"></span>
+                                <span>LIVE SSE STREAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Natural Competition Notice Banner -->
+                        <div class="natural-comp-banner">
+                            <span class="nc-icon">🤝</span>
+                            <div class="nc-text">
+                                <strong>Ethical Natural Competition:</strong>
+                                <span>Your earned XP and Gold are permanent. Rank shifts happen naturally because other adventurers completed quests, never because you were penalized.</span>
+                            </div>
+                        </div>
+
+                        <div class="leaderboard-container">
+                            <table class="pixel-table" id="leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th>RANK</th>
+                                        <th>ADVENTURER</th>
+                                        <th>ARCHETYPE</th>
+                                        <th>LEVEL</th>
+                                        <th>LIFETIME XP</th>
+                                        <th>TODAY'S XP</th>
+                                        <th>STREAK</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboard-tbody">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 7: RECOVERY DECK & HABIT PROTOCOLS                    -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-coach">
+                        <div class="tab-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">BEHAVIORAL SCIENCE / RESILIENCE</span>
+                                <h2 class="tab-main-title">🛡️ RECOVERY DECK & HABIT PROTOCOLS</h2>
+                            </div>
+                        </div>
+
+                        <div class="coach-layout-grid">
+                            <!-- Left: Recovery Mode Micro-Quests -->
+                            <div class="adv-panel recovery-panel">
+                                <div class="panel-header">
+                                    <div class="panel-title-group">
+                                        <span class="panel-icon">🛡️</span>
+                                        <h3 class="panel-title">ZERO-SHAME RECOVERY DECK</h3>
+                                    </div>
+                                    <span class="badge-count">5-MIN MICRO-QUESTS</span>
+                                </div>
+                                <p class="panel-desc">Missed a few days? No penalties. Pick any 5-minute micro-quest to easily restart your momentum!</p>
+                                <div class="recovery-quests-list" id="recovery-quests-list"></div>
+                            </div>
+
+                            <!-- Right: Tactical Strategy Cards -->
+                            <div class="adv-panel">
+                                <div class="panel-header">
+                                    <div class="panel-title-group">
+                                        <span class="panel-icon">📜</span>
+                                        <h3 class="panel-title">TACTICAL STRATEGY PROTOCOLS</h3>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                                    <div style="background: #090e17; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px;">
+                                        <div style="font-family: var(--font-pixel); font-size: 0.58rem; color: #38bdf8; margin-bottom: 4px;">🌱 HABIT ANCHORING</div>
+                                        <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin: 0;">Attach your new habit to an existing daily trigger (e.g. <em>"After morning water, I read 5 pages"</em>). Keep starter friction near zero.</p>
+                                    </div>
+                                    <div style="background: #090e17; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px;">
+                                        <div style="font-family: var(--font-pixel); font-size: 0.58rem; color: #facc15; margin-bottom: 4px;">🛡️ ZERO-SHAME MOMENTUM RESTART</div>
+                                        <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin: 0;">Missing days does NOT erase your past XP or progress. Execute one single 5-minute micro-quest to reignite dopamine feedback.</p>
+                                    </div>
+                                    <div style="background: #090e17; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px;">
+                                        <div style="font-family: var(--font-pixel); font-size: 0.58rem; color: #4ade80; margin-bottom: 4px;">⏱️ 25-MIN POMODORO SPRINTS</div>
+                                        <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin: 0;">Single-task without browser tabs. Use our built-in 8-bit focus chimes and reward your character with +50 INT XP upon sprint completion.</p>
+                                    </div>
+                                    <div style="background: #090e17; border: 1px solid #1e293b; border-radius: 6px; padding: 10px 12px;">
+                                        <div style="font-family: var(--font-pixel); font-size: 0.58rem; color: #c084fc; margin-bottom: 4px;">🌙 VITALITY & SLEEP PROTOCOL</div>
+                                        <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin: 0;">Wind down screen brightness 30 minutes before sleep to recharge your character's Max Energy pool for tomorrow's questing.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 8: ANALYTICS & AUDIT LEDGER                           -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-analytics">
+                        <div class="tab-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">ANALYTICS / AUDIT LEDGER</span>
+                                <h2 class="tab-main-title">📊 PROGRESS ANALYTICS & LEDGERS</h2>
+                            </div>
+                        </div>
+
+                        <!-- Top KPI Row -->
+                        <div class="stats-overview-banner">
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">⚔️</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">QUESTS COMPLETED</span>
+                                    <span class="kpi-val" id="analytics-total-quests">0</span>
+                                </div>
+                            </div>
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">🔥</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">BEST STREAK</span>
+                                    <span class="kpi-val" id="analytics-best-streak">1 DAY</span>
+                                </div>
+                            </div>
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">🚩</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">WORLD DISTANCE</span>
+                                    <span class="kpi-val" id="analytics-km">2.0 KM</span>
+                                </div>
+                            </div>
+                            <div class="stats-kpi-card">
+                                <span class="kpi-icon">🪙</span>
+                                <div class="kpi-info">
+                                    <span class="kpi-label">CURRENT GOLD</span>
+                                    <span class="kpi-val" id="analytics-gold">1,000 G</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2-Column Analytics Charts & Ledgers -->
+                        <div class="stats-detail-grid">
+                            <div class="adv-panel">
+                                <div class="panel-header">
+                                    <h3 class="panel-title">📈 7-DAY XP VELOCITY</h3>
+                                </div>
+                                <div class="analytics-xp-bar-chart" id="analytics-xp-bars"></div>
+                            </div>
+
+                            <div class="adv-panel">
+                                <div class="panel-header">
+                                    <h3 class="panel-title">🧾 IMMUTABLE XP TRANSACTION LEDGER</h3>
+                                </div>
+                                <div class="ledger-scroll-table" id="analytics-ledger-container"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- TAB 9: SETTINGS & ACCESSIBILITY                           -->
+                    <!-- ========================================================= -->
+                    <div class="adv-tab-view hidden" id="adv-tab-settings">
+                        <div class="tab-page-header">
+                            <div class="tab-header-titles">
+                                <span class="tab-nav-crumb">CONFIGURATION / ACCESSIBILITY</span>
+                                <h2 class="tab-main-title">⚙️ SYSTEM SETTINGS & ACCESSIBILITY</h2>
+                            </div>
+                        </div>
+
+                        <div class="settings-grid">
+                            <div class="adv-panel">
+                                <div class="panel-header">
+                                    <h3 class="panel-title">♿ ACCESSIBILITY & MOTION</h3>
+                                </div>
+                                <div class="settings-options-list">
+                                    <div class="setting-row">
+                                        <div class="sr-info">
+                                            <span class="sr-title">Reduced Motion Mode</span>
+                                            <span class="sr-desc">Suppresses floating particle bursts, screen shakes, and fast animations.</span>
+                                        </div>
+                                        <input type="checkbox" id="setting-reduced-motion" onchange="toggleReducedMotion(this.checked)">
+                                    </div>
+                                    <div class="setting-row">
+                                        <div class="sr-info">
+                                            <span class="sr-title">8-Bit Sound Effects & Chimes</span>
+                                            <span class="sr-desc">Plays Web Audio retro chimes on quest completions and level ups.</span>
+                                        </div>
+                                        <input type="checkbox" id="setting-sound-fx" checked onchange="toggleSoundSetting(this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="adv-panel">
+                                <div class="panel-header">
+                                    <h3 class="panel-title">💾 DATA BACKUP & RESTORE</h3>
+                                </div>
+                                <p class="panel-desc">Export an encrypted JSON snapshot of your character, base layout, and quests.</p>
+                                <div class="backup-actions-row">
+                                    <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="exportUserData()">📥 EXPORT BACKUP (.JSON)</button>
+                                    <button type="button" class="pixel-btn btn-sm btn-gold" onclick="document.getElementById('backup-file-input').click()">📤 RESTORE BACKUP</button>
+                                    <button type="button" class="pixel-btn btn-sm btn-rose" onclick="logout()">LOGOUT</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </main>
+
+                <!-- 💬 FLOATING CONTEXTUAL PROXIMITY ACTION BAR -->
+                <div class="adv-context-prompt hidden" id="adv-context-prompt">
+                    <!-- Populated dynamically by LifeRPGWorldEngine on proximity -->
+                </div>
+
+                <!-- ⚔️ DYNAMIC CONTEXTUAL DOCK: ACTIVE QUEST / FOCUS TIMER MODE -->
+                <div class="adv-context-dock hidden" id="adv-active-quest-dock">
+                    <div class="acd-badge">⚔️ ACTIVE QUEST IN PROGRESS</div>
+                    <div class="acd-content">
+                        <div class="acd-info">
+                            <span class="acd-title" id="acd-quest-title">Deep Work Focus Sprint</span>
+                            <span class="acd-timer" id="acd-quest-timer">24:59</span>
+                        </div>
+                        <div class="acd-progress-track">
+                            <div class="acd-progress-fill" id="acd-quest-progress-bar" style="width: 25%;"></div>
+                        </div>
+                        <div class="acd-actions">
+                            <button type="button" class="pixel-btn btn-sm btn-green" onclick="completeActiveSprintQuest()">[ ✓ COMPLETE QUEST ]</button>
+                            <button type="button" class="pixel-btn btn-sm btn-rose" onclick="cancelActiveSprintQuest()">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🧭 FIXED BOTTOM CONTROL BAR (7 SYSTEMS AS IN HAND-DRAWN SKETCH) -->
+                <nav class="adv-bottom-dock wireframe-bottom-bar" id="adv-bottom-nav">
+                    <button class="adv-nav-btn active" id="nav-btn-world" onclick="switchAdvTab('world')">
+                        <span class="nav-label">world</span>
+                    </button>
+                    <button class="adv-nav-btn" id="nav-btn-quests" onclick="switchAdvTab('quests')">
+                        <span class="nav-label">quest</span>
+                    </button>
+                    <button class="adv-nav-btn" id="nav-btn-campaigns" onclick="switchAdvTab('campaigns')">
+                        <span class="nav-label">Goals</span>
+                    </button>
+                    <button class="adv-nav-btn" id="nav-btn-home" onclick="switchAdvTab('home')">
+                        <span class="nav-label">my base</span>
+                    </button>
+                    <button class="adv-nav-btn" id="nav-btn-leaderboard" onclick="switchAdvTab('leaderboard')">
+                        <span class="nav-label">rank</span>
+                    </button>
+                    <button class="adv-nav-btn" id="nav-btn-analytics" onclick="switchAdvTab('analytics')">
+                        <span class="nav-label">stats</span>
+                    </button>
+                    <button class="adv-nav-btn" id="nav-btn-hero" onclick="switchAdvTab('hero')">
+                        <span class="nav-label">hero</span>
+                    </button>
+                </nav>
+
+                <!-- Mobile Slide-Up Drawer for Secondary Tabs -->
+                <div class="mobile-more-drawer hidden" id="mobile-more-drawer">
+                    <div class="mmd-backdrop" onclick="toggleMobileMoreMenu()"></div>
+                    <div class="mmd-sheet">
+                        <div class="mmd-handle"></div>
+                        <div class="mmd-title">⚡ LIFERPG SYSTEMS</div>
+                        <div class="mmd-grid">
+                            <button type="button" class="mmd-grid-btn" onclick="switchAdvTab('campaigns'); toggleMobileMoreMenu();">
+                                <span class="mmd-icon">🎯</span>
+                                <span class="mmd-label">GOALS</span>
+                            </button>
+                            <button type="button" class="mmd-grid-btn" onclick="switchAdvTab('shop'); toggleMobileMoreMenu();">
+                                <span class="mmd-icon">🎒</span>
+                                <span class="mmd-label">SHOP</span>
+                            </button>
+                            <button type="button" class="mmd-grid-btn" onclick="switchAdvTab('achievements'); toggleMobileMoreMenu();">
+                                <span class="mmd-icon">🏆</span>
+                                <span class="mmd-label">TROPHIES</span>
+                            </button>
+                            <button type="button" class="mmd-grid-btn" onclick="switchAdvTab('leaderboard'); toggleMobileMoreMenu();">
+                                <span class="mmd-icon">🥇</span>
+                                <span class="mmd-label">RANKS</span>
+                            </button>
+                            <button type="button" class="mmd-grid-btn" onclick="switchAdvTab('coach'); toggleMobileMoreMenu();">
+                                <span class="mmd-icon">🛡️</span>
+                                <span class="mmd-label">RECOVERY</span>
+                            </button>
+                            <button type="button" class="mmd-grid-btn" onclick="switchAdvTab('analytics'); toggleMobileMoreMenu();">
+                                <span class="mmd-icon">📊</span>
+                                <span class="mmd-label">STATS</span>
+                            </button>
+                            <button type="button" class="mmd-grid-btn" onclick="switchAdvTab('settings'); toggleMobileMoreMenu();">
+                                <span class="mmd-icon">⚙️</span>
+                                <span class="mmd-label">SETTINGS</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODAL: ➕ ADD REAL LIFE QUEST -->
+    <div class="rpg-modal-overlay hidden" id="add-quest-modal">
+        <div class="rpg-modal-content">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">⚔ FORGE REAL-LIFE QUEST</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <form id="adv-add-quest-form" onsubmit="handleAdvCreateQuest(event)" class="adv-form-content">
+                <div class="pixel-input-group">
+                    <label>QUEST TITLE (Real-life action)</label>
+                    <input type="text" id="new-q-title" placeholder="e.g., Read 25 pages of System Design..." required>
+                </div>
+
+                <div class="pixel-input-group">
+                    <label>DESCRIPTION (Optional)</label>
+                    <input type="text" id="new-q-desc" placeholder="Details or success criteria...">
+                </div>
+
+                <div class="form-row">
+                    <div class="pixel-input-group flex-1">
+                        <label>LIFE CATEGORY</label>
+                        <select id="new-q-category" class="pixel-select">
+                            <option value="School" selected>🏫 School / Academics</option>
+                            <option value="Exercise">🏋️ Exercise / Fitness</option>
+                            <option value="Health Care">💧 Health Care / Vitality</option>
+                            <option value="Knowledge">📚 Knowledge / INT</option>
+                            <option value="Focus">🧠 Focus / Discipline</option>
+                            <option value="Finance">💎 Finance / Wealth</option>
+                            <option value="Tech">💻 Coding / Tech</option>
+                        </select>
+                    </div>
+                    <div class="pixel-input-group flex-1">
+                        <label>DIFFICULTY & REWARDS</label>
+                        <select id="new-q-difficulty" class="pixel-select" onchange="onDifficultyChange(this.value)">
+                            <option value="EASY" selected>🟢 EASY (2 Coins, +20 XP)</option>
+                            <option value="MED">🟡 MED (4 Coins, +40 XP)</option>
+                            <option value="HARD">🔴 HARD (6 Coins, +60 XP)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions-modal">
+                    <button type="submit" class="pixel-btn btn-green btn-large">FORGE QUEST</button>
+                    <button type="button" class="pixel-btn btn-slate" onclick="closeAddQuestModal()">CANCEL</button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- MODAL: 🎯 CREATE MANUAL CAMPAIGN (MULTI-STEP RPG FLOW) -->
+    <div class="rpg-modal-overlay hidden" id="create-campaign-modal">
+        <div class="rpg-modal-content wide">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">🎯 FORGE YOUR ADVENTURE CAMPAIGN</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+            <form id="create-campaign-form" onsubmit="handleCreateCampaign(event)" class="adv-form-content">
+                <div class="form-row">
+                    <div class="pixel-input-group flex-2">
+                        <label>STEP 1: CAMPAIGN TITLE (Real-life Ambition)</label>
+                        <input type="text" id="new-campaign-title" placeholder="e.g. Master Full-Stack Engineering, 10K Marathon..." required oninput="updateCampaignFormPreview()">
+                    </div>
+                    <div class="pixel-input-group flex-1">
+                        <label>STEP 2: RPG ATTRIBUTE</label>
+                        <select id="new-campaign-attr" class="pixel-select" onchange="updateCampaignFormPreview()">
+                            <option value="intelligence">🧠 Intelligence (INT)</option>
+                            <option value="discipline">🛡️ Discipline (WIL)</option>
+                            <option value="strength">💪 Strength (STR)</option>
+                            <option value="vitality">⚡ Vitality (VIT)</option>
+                            <option value="creativity">🎨 Creativity (CRE)</option>
+                            <option value="social">🤝 Social (SOC)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pixel-input-group">
+                    <label>CAMPAIGN MISSION STATEMENT (Why this matters)</label>
+                    <input type="text" id="new-campaign-desc" placeholder="Transform your real-life abilities through disciplined weekly progression..." oninput="updateCampaignFormPreview()">
+                </div>
+
+                <div class="form-row">
+                    <div class="pixel-input-group flex-1">
+                        <label>STEP 3: TARGET DURATION</label>
+                        <select id="new-campaign-duration" class="pixel-select" onchange="updateCampaignFormPreview()">
+                            <option value="2">2 Weeks Sprint (Fast Track)</option>
+                            <option value="4" selected>4 Weeks Campaign (Standard Roadmap)</option>
+                            <option value="8">8 Weeks Mastery (Deep Transformation)</option>
+                            <option value="12">12 Weeks Epic Journey (Seasonal Master)</option>
+                        </select>
+                    </div>
+                    <div class="pixel-input-group flex-1">
+                        <label>STEP 4: DIFFICULTY TIER</label>
+                        <select id="new-campaign-difficulty" class="pixel-select" onchange="updateCampaignFormPreview()">
+                            <option value="CASUAL">🟢 CASUAL (Gentle Habits & Steady Rewards)</option>
+                            <option value="BALANCED" selected>🟡 BALANCED (Recommended RPG Progression)</option>
+                            <option value="CHALLENGE">🔴 CHALLENGE (Monk Mode & Maximum XP/Gold)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Live Campaign Roadmap Preview Box -->
+                <div class="campaign-builder-preview-box" id="campaign-builder-preview">
+                    <div class="cbp-header">
+                        <span class="cbp-badge" id="cbp-attr-badge">🧠 INTELLIGENCE</span>
+                        <h4 class="cbp-title" id="cbp-preview-title">Master Full-Stack Engineering</h4>
+                    </div>
+                    <p class="cbp-desc" id="cbp-preview-desc">4-Week Structured Progression • 4 Milestones • 2 Linked Daily Quests</p>
+                    <div class="cbp-milestones-row">
+                        <span class="cbp-m-chip">M1: Foundation & Baseline</span>
+                        <span class="cbp-arrow">→</span>
+                        <span class="cbp-m-chip">M2: Practice & Application</span>
+                        <span class="cbp-arrow">→</span>
+                        <span class="cbp-m-chip">M3: Deep Sprint</span>
+                        <span class="cbp-arrow">→</span>
+                        <span class="cbp-m-chip boss">👑 M4: Final Boss Finish</span>
+                    </div>
+                </div>
+
+                <div class="form-actions-modal">
+                    <button type="submit" class="pixel-btn btn-gold btn-large">🚀 START CAMPAIGN ADVENTURE</button>
+                    <button type="button" class="pixel-btn btn-slate" onclick="closeCreateCampaignModal()">CANCEL</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: 📜 MILESTONE DETAIL DRAWER / INSPECTOR -->
+    <div class="rpg-modal-overlay hidden" id="milestone-detail-modal">
+        <div class="rpg-modal-content">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title" id="mdm-header-title">📜 MILESTONE INTEL</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+            
+            <div class="milestone-detail-body" style="padding: 16px;">
+                <div class="mdm-top-badge-row">
+                    <span class="mdm-phase-tag" id="mdm-phase-tag">PHASE 2 OF 4</span>
+                    <span class="mdm-status-pill" id="mdm-status-pill">⚔️ CURRENT OBJECTIVE</span>
+                </div>
+
+                <h3 class="mdm-title" id="mdm-title">Active Problem Solving & Chapter Drills</h3>
+                <p class="mdm-desc" id="mdm-desc">Complete focused exercises to reinforce foundational mental models.</p>
+
+                <div class="mdm-requirements-box">
+                    <h4 class="mdm-section-label">OBJECTIVES & CRITERIA:</h4>
+                    <ul class="mdm-req-list" id="mdm-req-list">
+                        <!-- Dynamic requirement items -->
+                    </ul>
+                </div>
+
+                <div class="mdm-rewards-deck">
+                    <h4 class="mdm-section-label">MILESTONE REWARDS:</h4>
+                    <div class="mdm-rewards-grid">
+                        <div class="mdm-rew-chip xp"><span class="r-icon">⭐</span> <span id="mdm-rew-xp">+150 XP</span></div>
+                        <div class="mdm-rew-chip gold"><span class="r-icon">🪙</span> <span id="mdm-rew-gold">+150 Gold</span></div>
+                        <div class="mdm-rew-chip stat"><span class="r-icon">🧠</span> <span id="mdm-rew-stat">+3 Attribute Growth</span></div>
+                    </div>
+                </div>
+
+                <div class="mdm-actions-row" id="mdm-actions-container">
+                    <!-- Dynamic complete / locked button -->
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="pixel-btn btn-slate" onclick="closeMilestoneDetailModal()">CLOSE INTEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🏆 CAMPAIGN MASTERED CELEBRATION -->
+    <div class="rpg-modal-overlay hidden" id="campaign-mastered-modal">
+        <div class="rpg-modal-content celebration-content wide">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title gold">🏆 CAMPAIGN MASTERED!</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="celebration-body">
+                <div class="lvlup-burst-badge" id="cmm-trophy-icon">🏆</div>
+                <h2 class="victory-name" id="cmm-campaign-title">Semester High Honors</h2>
+                <div class="victory-banner">"4 OF 4 MILESTONES CONQUERED • REAL-LIFE MASTERY ACHIEVED"</div>
+                
+                <div class="stat-boosts-box">
+                    <span class="boost-tag" id="cmm-total-xp">+950 TOTAL XP</span>
+                    <span class="boost-tag" id="cmm-total-gold">+1,100 TOTAL GOLD</span>
+                    <span class="boost-tag" id="cmm-attr-boost">+10 ATTRIBUTE GROWTH</span>
+                </div>
+
+                <div class="unlock-item-card" style="margin-top: 16px;">
+                    <div class="unlock-banner">PERMANENT TROPHY UNLOCKED</div>
+                    <div class="unlock-name" id="cmm-trophy-name">SCHOLAR'S GRAND TROPHY</div>
+                    <p class="unlock-desc" id="cmm-trophy-perk">"Permanent proof of your real-world dedication, deep focus, and self-mastery."</p>
+                </div>
+
+                <div class="lvlup-actions" style="margin-top: 20px;">
+                    <button type="button" class="pixel-btn btn-gold btn-large pulse-btn" onclick="closeCampaignMasteredModal()">CLAIM VICTORY & RETURN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ⏱️ FOCUS TIMER FULLSCREEN VIEW -->
+    <div class="rpg-modal-overlay hidden" id="focus-timer-modal">
+        <div class="rpg-modal-content" style="max-width: 500px; text-align: center;">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">⏱️ DEEP WORK FOCUS SPRINT</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+            <div style="padding: 24px;">
+                <div id="modal-focus-timer-digits" style="font-family: var(--font-pixel); font-size: 48px; color: #38bdf8; margin-bottom: 16px; letter-spacing: 2px;">25:00</div>
+                <div id="modal-focus-quest-name" style="font-family: var(--font-pixel); font-size: 12px; color: #facc15; margin-bottom: 20px;">⚡ General Deep Work Sprint</div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 16px;">
+                    <button type="button" class="pixel-btn btn-green btn-large" id="btn-modal-timer-toggle" onclick="toggleFocusTimer()">▶ START TIMER</button>
+                    <button type="button" class="pixel-btn btn-slate" onclick="resetFocusTimer()">↺ RESET</button>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: center;">
+                    <button type="button" class="pixel-btn btn-sm btn-slate" onclick="setFocusDuration(15)">15m</button>
+                    <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="setFocusDuration(25)">25m</button>
+                    <button type="button" class="pixel-btn btn-sm btn-gold" onclick="setFocusDuration(45)">45m</button>
+                    <button type="button" class="pixel-btn btn-sm btn-purple" onclick="setFocusDuration(60)">60m</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="pixel-btn btn-slate" onclick="closeFocusTimerModal()">CLOSE DOCK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🚲 VEHICLE & TRANSPORTATION GARAGE -->
+    <div class="rpg-modal-overlay hidden" id="garage-modal">
+        <div class="rpg-modal-content wide">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">🚲 VEHICLE GARAGE & RIDES</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="garage-body">
+                <p class="garage-subtitle">Level up in real life to unlock faster vehicles, visual trails, and speed multipliers!</p>
+                <div class="vehicles-grid" id="vehicles-grid-container">
+                    <!-- Dynamic vehicle cards -->
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="pixel-btn btn-slate" onclick="closeGarageModal()">CLOSE GARAGE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🎉 LEVEL UP & UNLOCK CELEBRATION -->
+    <div class="rpg-modal-overlay hidden" id="levelup-unlock-modal">
+        <div class="rpg-modal-content celebration-content">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title gold" id="levelup-header-text">LEVEL UP!</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="celebration-body">
+                <div class="lvlup-burst-badge" id="lvlup-badge-val">LVL 05</div>
+                <h3 class="victory-name" id="lvlup-hero-name">GSJustin</h3>
+                
+                <div class="stat-boosts-box" id="lvlup-stat-boosts">
+                    <span class="boost-tag">+5 INT</span>
+                    <span class="boost-tag">+5 STR</span>
+                    <span class="boost-tag">+10 MAX ENERGY</span>
+                </div>
+
+                <!-- Unlocked Item Box -->
+                <div class="unlock-item-card hidden" id="lvlup-unlock-card">
+                    <div class="unlock-banner">NEW TRANSPORT UNLOCKED!</div>
+                    <div class="unlock-icon" id="unlock-vehicle-icon">🚲</div>
+                    <div class="unlock-name" id="unlock-vehicle-name">BICYCLE</div>
+                    <p class="unlock-desc" id="unlock-vehicle-desc">"You've come far enough to earn your first real ride."</p>
+                    <button type="button" class="pixel-btn btn-green btn-large" id="btn-equip-unlocked" onclick="equipUnlockedTransport()">EQUIP RIDE & PEDAL</button>
+                </div>
+
+                <div class="lvlup-actions">
+                    <button type="button" class="pixel-btn btn-cyan btn-large" onclick="closeLevelUpModal()">CONTINUE JOURNEY</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ⭐ PROGRESSION ROADMAP -->
+    <div class="rpg-modal-overlay hidden" id="progression-modal">
+        <div class="rpg-modal-content wide">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">⭐ HERO ROADMAP</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="roadmap-body">
+                <div class="progression-track">
+                    <div class="milestone-card active">
+                        <div class="lvl-badge">LVL 1</div>
+                        <div class="m-info">
+                            <span class="m-title">Beginner</span>
+                            <span class="m-desc">Starter avatar unlocked with 1,000 starting Gold.</span>
+                        </div>
+                    </div>
+                    <div class="milestone-card">
+                        <div class="lvl-badge">LVL 5</div>
+                        <div class="m-info">
+                            <span class="m-title">Apprentice</span>
+                            <span class="m-desc">+500 Bonus Gold & unlock 6 new hairstyles.</span>
+                        </div>
+                    </div>
+                    <div class="milestone-card">
+                        <div class="lvl-badge">LVL 10</div>
+                        <div class="m-info">
+                            <span class="m-title">Dedicated Hero</span>
+                            <span class="m-desc">Rare Accessories & companion armor unlocked.</span>
+                        </div>
+                    </div>
+                    <div class="milestone-card legendary">
+                        <div class="lvl-badge">LVL 100</div>
+                        <div class="m-info">
+                            <span class="m-title">True Self Actualization</span>
+                            <span class="m-desc">Ultimate Crown & Legendary Character Transformation!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="pixel-btn btn-slate" onclick="closeProgressionModal()">RETURN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🎉 CELEBRATION -->
+    <div class="rpg-modal-overlay hidden" id="journey-celebration-modal">
+        <div class="rpg-modal-content celebration-content">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title gold">CHARACTER CREATED!</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="celebration-body">
+                <canvas id="celebration-avatar-canvas" width="150" height="180"></canvas>
+                <h2 class="victory-name" id="celebration-hero-name">GSJustin</h2>
+                <p class="victory-title" id="celebration-hero-title">"The Beginner"</p>
+                <div class="victory-banner">"YOUR JOURNEY BEGINS NOW."</div>
+                <p class="victory-subtext">Starter Gold: 🪙 1,000 • Level 1 initialized.</p>
+                <button class="pixel-btn btn-green btn-large pulse-btn" onclick="finishJourneyTransition()">ENTER LIFE RPG REALM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🎁 ADD CUSTOM REWARD -->
+    <div class="rpg-modal-overlay hidden" id="add-reward-modal">
+        <div class="rpg-modal-content">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">🎁 CREATE CUSTOM REWARD</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <form id="adv-add-reward-form" onsubmit="handleCreateCustomReward(event)" class="adv-form-content">
+                <div class="pixel-input-group">
+                    <label>REWARD NAME (Real-life Treat)</label>
+                    <input type="text" id="new-reward-title" placeholder="e.g., Weekend Road Trip, Fancy Dinner..." required>
+                </div>
+
+                <div class="pixel-input-group">
+                    <label>DESCRIPTION (Optional)</label>
+                    <input type="text" id="new-reward-desc" placeholder="Details about this reward...">
+                </div>
+
+                <div class="form-row">
+                    <div class="pixel-input-group flex-1">
+                        <label>ICON / EMOJI</label>
+                        <select id="new-reward-icon" class="pixel-select">
+                            <option value="🎁">🎁 Gift / Treat</option>
+                            <option value="🎬">🎬 Movie / Show</option>
+                            <option value="🍕">🍕 Food / Meal</option>
+                            <option value="🎮">🎮 Gaming / Fun</option>
+                            <option value="☕">☕ Coffee / Cafe</option>
+                            <option value="🛍️">🛍️ Shopping / Gear</option>
+                            <option value="✈️">✈️ Travel / Trip</option>
+                        </select>
+                    </div>
+                    <div class="pixel-input-group flex-1">
+                        <label>GOLD COST</label>
+                        <input type="number" id="new-reward-cost" class="clean-name-input" min="50" max="5000" value="200" required>
+                    </div>
+                </div>
+
+                <div class="form-actions-modal">
+                    <button type="submit" class="pixel-btn btn-green btn-large">SAVE REWARD</button>
+                    <button type="button" class="pixel-btn btn-slate" onclick="closeAddRewardModal()">CANCEL</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: 💾 PROFILE BACKUP & DATA MANAGEMENT -->
+    <div class="rpg-modal-overlay hidden" id="backup-modal">
+        <div class="rpg-modal-content">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">💾 PROFILE & CLOUD BACKUP</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="backup-modal-body" style="padding: 16px; color: #cbd5e1; font-family: var(--font-pixel); font-size: 11px; line-height: 1.6;">
+                <p style="margin-bottom: 16px; color: #94a3b8;">Save your Life RPG hero progress, quests, completed achievements, and rewards safely to JSON, or restore from a previous save file.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="background: rgba(15, 23, 42, 0.8); border: 2px solid #334155; padding: 12px; border-radius: 4px;">
+                        <h4 style="color: #38bdf8; margin: 0 0 6px 0; font-size: 12px;">📤 EXPORT HERO BACKUP</h4>
+                        <p style="margin: 0 0 10px 0; font-size: 10px; color: #94a3b8;">Download a full snapshot of your current character stats, equipment, and quests.</p>
+                        <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="exportUserData()">DOWNLOAD BACKUP (.JSON)</button>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.8); border: 2px solid #334155; padding: 12px; border-radius: 4px;">
+                        <h4 style="color: #eab308; margin: 0 0 6px 0; font-size: 12px;">📥 RESTORE FROM BACKUP</h4>
+                        <p style="margin: 0 0 10px 0; font-size: 10px; color: #94a3b8;">Upload a previously exported backup file to restore your hero state.</p>
+                        <input type="file" id="backup-file-input" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                        <button type="button" class="pixel-btn btn-sm btn-gold" onclick="document.getElementById('backup-file-input').click()">CHOOSE JSON FILE</button>
+                    </div>
+
+                    <div style="background: rgba(69, 10, 10, 0.4); border: 2px solid #7f1d1d; padding: 12px; border-radius: 4px;">
+                        <h4 style="color: #f87171; margin: 0 0 6px 0; font-size: 12px;">⚠️ FACTORY DATA RESET</h4>
+                        <p style="margin: 0 0 10px 0; font-size: 10px; color: #fca5a5;">Reset local guest data and restore the 14 default starter quests.</p>
+                        <button type="button" class="pixel-btn btn-sm btn-red" onclick="resetUserData()">RESET ALL TO DEFAULT</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="pixel-btn btn-slate" onclick="closeBackupModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🏪 HOME BUILD CATALOG & FURNITURE SHOP -->
+    <div class="rpg-modal-overlay hidden" id="home-shop-modal">
+        <div class="rpg-modal-content wide">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">🏪 BASE CATALOG & SHOP</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="home-shop-body">
+                <p class="home-shop-intro">Purchase and select blocks, wallpaper, flooring, and furniture for your base using earned Coins and Construction XP.</p>
+                <div class="home-shop-grid" id="home-shop-items-grid">
+                    <!-- Dynamic Catalog Cards -->
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="pixel-btn btn-slate" onclick="closeHomeShopModal()">CLOSE SHOP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🛏️ ROOM BLUEPRINTS & PROPERTY EXPANSIONS -->
+    <div class="rpg-modal-overlay hidden" id="room-blueprints-modal">
+        <div class="rpg-modal-content wide">
+            <div class="rpg-header-plate">
+                <span class="bolt bolt-l"></span>
+                <h2 class="pixel-title">🛏️ ROOM BLUEPRINTS</h2>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <div class="blueprints-body">
+                <p class="blueprints-intro">Expand your base into new wings as your Home Level rises. Each room unlocks specialized furniture, interactive character behaviors, and stat boosts!</p>
+                <div class="blueprints-grid" id="blueprints-cards-grid">
+                    <!-- Room Blueprint Cards -->
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="pixel-btn btn-slate" onclick="closeRoomBlueprintsModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: 🎵 INTEGRATED MUSIC PLAYER (LO-FI, SYNTH, SPOTIFY, YOUTUBE) -->
+    <div class="rpg-modal-overlay hidden" id="music-player-modal">
+        <div class="rpg-modal-content music-modal-xlarge">
+            <div class="rpg-header-plate music-header-plate">
+                <span class="bolt bolt-l"></span>
+                <div class="m-header-title-wrap">
+                    <h2 class="pixel-title">🎵 LIFE RPG MUSIC & FOCUS HUB</h2>
+                    <span class="m-sub-badge">LIVE AUDIO DECK • BACKGROUND PLAY ENABLED</span>
+                </div>
+                <div class="m-header-actions">
+                    <button type="button" class="m-head-btn m-btn-min" onclick="window.musicPlayer.minimizePlayer()" title="Minimize to Floating Dock (Audio Keeps Playing)">🗕 MINIMIZE (BG PLAY)</button>
+                    <button type="button" class="m-head-btn m-btn-stop" onclick="window.musicPlayer.stopAllAudio()" title="Stop all audio">⏹ STOP</button>
+                    <button type="button" class="m-head-btn m-btn-close" onclick="closeMusicModal()" title="Close to Background">✕</button>
+                </div>
+                <span class="bolt bolt-r"></span>
+            </div>
+
+            <!-- Global Background Play Alert Banner -->
+            <div class="music-bg-status-banner">
+                <span class="bg-pulse-dot"></span>
+                <span><strong>🎧 Seamless Background Play:</strong> Music plays continuously across all game screens, quests, and base building!</span>
+            </div>
+
+            <div class="music-modal-body">
+                <!-- Music Mode Selector Tabs -->
+                <div class="music-tabs-row">
+                    <button type="button" class="music-tab-btn active" id="music-tab-synth" onclick="window.musicPlayer.switchMode('synth')">
+                        <span class="tab-icon">📻</span> 8-BIT LO-FI SYNTHESIZER
+                    </button>
+                    <button type="button" class="music-tab-btn" id="music-tab-spotify" onclick="window.musicPlayer.switchMode('spotify')">
+                        <span class="tab-icon">🎧</span> SPOTIFY FOCUS PLAYLISTS
+                    </button>
+                    <button type="button" class="music-tab-btn" id="music-tab-youtube" onclick="window.musicPlayer.switchMode('youtube')">
+                        <span class="tab-icon">▶️</span> YOUTUBE MUSIC & STREAMS
+                    </button>
+                </div>
+
+                <!-- PANEL 1: RETRO PROCEDURAL SYNTHESIZER -->
+                <div class="music-view-panel" id="music-panel-synth">
+                    <div class="synth-player-card">
+                        <div class="synth-top-row">
+                            <div class="synth-track-info">
+                                <div class="synth-genre-row">
+                                    <span class="synth-genre-badge" id="modal-music-genre">Lo-Fi Chill</span>
+                                    <span class="synth-bpm-badge" id="modal-music-bpm">72 BPM</span>
+                                </div>
+                                <h3 class="synth-track-title" id="modal-music-track-title">☕ 8-Bit Lo-Fi Study Beats</h3>
+                                <span class="synth-sub">Zero-lag In-Browser Procedural Web Audio Engine • 100% Offline Capable</span>
+                            </div>
+
+                            <!-- Big EQ Visualizer Rack -->
+                            <div class="synth-eq-display" id="synth-eq-visualizer">
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                                <span class="music-eq-bar"></span>
+                            </div>
+                        </div>
+
+                        <!-- Track Preset Selector Cards -->
+                        <div class="synth-tracks-picker">
+                            <button type="button" class="synth-preset-pill active" onclick="window.musicPlayer.playSynthTrack(0)">☕ Lo-Fi Study (72 BPM)</button>
+                            <button type="button" class="synth-preset-pill" onclick="window.musicPlayer.playSynthTrack(1)">🌆 Synthwave Run (110 BPM)</button>
+                            <button type="button" class="synth-preset-pill" onclick="window.musicPlayer.playSynthTrack(2)">🍺 Cozy Tavern (84 BPM)</button>
+                            <button type="button" class="synth-preset-pill" onclick="window.musicPlayer.playSynthTrack(3)">⚔️ Questing Ambient (60 BPM)</button>
+                        </div>
+
+                        <!-- Big Tactile Control Rack -->
+                        <div class="synth-master-controls">
+                            <div class="synth-buttons-group">
+                                <button type="button" class="pixel-btn btn-slate" onclick="window.musicPlayer.prevTrack()">⏮ PREV</button>
+                                <button type="button" class="pixel-btn btn-green btn-play-large" id="modal-music-play-btn" onclick="window.musicPlayer.togglePlay()">▶ PLAY SYNTH</button>
+                                <button type="button" class="pixel-btn btn-slate" onclick="window.musicPlayer.nextTrack()">NEXT ⏭</button>
+                            </div>
+
+                            <div class="synth-volume-dock">
+                                <span class="vol-label">🔊 MASTER VOLUME:</span>
+                                <input type="range" id="music-vol-slider" min="0" max="1" step="0.05" value="0.35" oninput="window.musicPlayer.setVolume(this.value)">
+                                <span class="vol-pct-text" id="music-vol-pct">35%</span>
+                                <button type="button" class="pixel-btn btn-sm btn-slate" id="synth-mute-btn" onclick="window.musicPlayer.toggleMute()">🔇</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 2: SPOTIFY WEBSHARE & PLAYLISTS -->
+                <div class="music-view-panel hidden" id="music-panel-spotify">
+                    <div class="spotify-panel-content">
+                        <div class="stream-panel-header">
+                            <p class="music-panel-desc">Stream curated Spotify Lo-Fi, Synthwave, and Gaming Soundtracks while conquering your real-life quests.</p>
+                            
+                            <div class="spotify-quick-buttons">
+                                <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="window.musicPlayer.loadSpotifyPlaylist('playlist/0vvXsWCC9xrXsKd4FyS8kM')">☕ Lo-Fi Study</button>
+                                <button type="button" class="pixel-btn btn-sm btn-gold" onclick="window.musicPlayer.loadSpotifyPlaylist('playlist/37i9dQZF1DXdLEN7aqioXM')">⚡ Synthwave Cyber</button>
+                                <button type="button" class="pixel-btn btn-sm btn-green" onclick="window.musicPlayer.loadSpotifyPlaylist('playlist/37i9dQZF1DX1dMs27nE2Cd')">⚔️ RPG Soundtracks</button>
+                                <button type="button" class="pixel-btn btn-sm btn-slate" onclick="window.musicPlayer.loadSpotifyPlaylist('playlist/37i9dQZF1DX5trt9i14X7j')">🧠 Deep Work Flow</button>
+                                <button type="button" class="pixel-btn btn-sm btn-purple" onclick="window.musicPlayer.loadSpotifyPlaylist('playlist/37i9dQZF1DX4t95PaoR1zy')">🌌 Atmospheric Ambient</button>
+                            </div>
+                        </div>
+
+                        <div class="spotify-custom-bar">
+                            <input type="text" id="spotify-custom-url-input" class="clean-name-input flex-1" placeholder="Paste any Spotify Track, Album, or Playlist link (e.g. open.spotify.com/playlist/...)...">
+                            <button type="button" class="pixel-btn btn-sm btn-green" onclick="window.musicPlayer.loadCustomUrl(document.getElementById('spotify-custom-url-input').value)">LOAD SPOTIFY</button>
+                        </div>
+
+                        <div class="spotify-iframe-container-lg">
+                            <iframe id="spotify-embed-frame" style="border-radius:12px; width:100%; height:352px; border:none;" src="https://open.spotify.com/embed/playlist/0vvXsWCC9xrXsKd4FyS8kM?utm_source=generator&theme=0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 3: YOUTUBE MUSIC & STREAMS -->
+                <div class="music-view-panel hidden" id="music-panel-youtube">
+                    <div class="youtube-panel-content">
+                        <div class="stream-panel-header">
+                            <p class="music-panel-desc">Stream 24/7 Lo-Fi live radio streams or paste any YouTube / YouTube Music URL to play high-quality video audio.</p>
+                            
+                            <div class="yt-quick-buttons">
+                                <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="window.musicPlayer.loadYouTubeStream('https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1', '☕ Lofi Girl — Live Stream')">☕ Lofi Girl</button>
+                                <button type="button" class="pixel-btn btn-sm btn-gold" onclick="window.musicPlayer.loadYouTubeStream('https://www.youtube.com/embed/4xDzrJKXOOY?autoplay=1', '🌆 Synthwave Radio 24/7')">🌆 Synthwave Radio</button>
+                                <button type="button" class="pixel-btn btn-sm btn-green" onclick="window.musicPlayer.loadYouTubeStream('https://www.youtube.com/embed/wP_8tP9YyK8?autoplay=1', '🌿 Medieval RPG Tavern Ambience')">🌿 Tavern Ambience</button>
+                                <button type="button" class="pixel-btn btn-sm btn-purple" onclick="window.musicPlayer.loadYouTubeStream('https://www.youtube.com/embed/rUxyKA_-grg?autoplay=1', '🌧️ Rainy Night Coffee Shop')">🌧️ Rainy Cafe</button>
+                                <button type="button" class="pixel-btn btn-sm btn-rose" onclick="window.musicPlayer.loadYouTubeStream('https://www.youtube.com/embed/5qap5aO4i9A?autoplay=1', '🛡️ Zelda / Chill Beats')">🛡️ Chill RPG Beats</button>
+                            </div>
+                        </div>
+
+                        <div class="yt-custom-url-bar">
+                            <input type="text" id="yt-custom-url-input" class="clean-name-input flex-1" placeholder="Paste YouTube / YouTube Music link (e.g. music.youtube.com/watch?v=... or youtube.com/watch?v=...)...">
+                            <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="window.musicPlayer.loadCustomUrl(document.getElementById('yt-custom-url-input').value)">▶ PLAY STREAM</button>
+                        </div>
+
+                        <!-- Big 16:9 YouTube Video Container -->
+                        <div class="yt-iframe-container-lg">
+                            <iframe id="youtube-embed-frame" style="border-radius:12px; width:100%; height:440px; border:none;" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Big Modal Footer -->
+            <div class="modal-footer music-modal-footer">
+                <div class="mf-left">
+                    <span class="mf-status" id="music-dock-status-text">🎵 Status: Synth Standby • Ready to Focus</span>
+                </div>
+                <div class="mf-right">
+                    <button type="button" class="pixel-btn btn-gold" onclick="window.musicPlayer.minimizePlayer()">🗕 MINIMIZE (PLAY IN BG)</button>
+                    <button type="button" class="pixel-btn btn-rose" onclick="window.musicPlayer.stopAllAudio()">⏹ STOP AUDIO</button>
+                    <button type="button" class="pixel-btn btn-slate" onclick="closeMusicModal()">✕ CLOSE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING MINI MUSIC DOCK (PERSISTENT BACKGROUND AUDIO CONTROLS) -->
+    <div class="floating-music-dock hidden" id="floating-mini-music-dock">
+        <div class="fmd-main">
+            <div class="fmd-eq-box" onclick="expandMusicPlayer()" title="Click to Open Full Player">
+                <span class="music-eq-bar fmd-bar"></span>
+                <span class="music-eq-bar fmd-bar"></span>
+                <span class="music-eq-bar fmd-bar"></span>
+                <span class="music-eq-bar fmd-bar"></span>
+            </div>
+            <div class="fmd-info" onclick="expandMusicPlayer()" title="Click to Open Full Player">
+                <div class="fmd-badge-row">
+                    <span class="fmd-badge" id="fmd-stream-badge">LIVE AUDIO</span>
+                    <span class="fmd-bg-tag">BG ACTIVE</span>
+                </div>
+                <span class="fmd-title" id="fmd-track-title">8-Bit Lo-Fi Study Beats</span>
+            </div>
+            <div class="fmd-controls">
+                <button type="button" class="fmd-btn" id="fmd-play-btn" onclick="window.musicPlayer.togglePlay()" title="Play / Pause">⏸</button>
+                <button type="button" class="fmd-btn" id="fmd-mute-btn" onclick="window.musicPlayer.toggleMute()" title="Mute / Unmute">🔊</button>
+                <button type="button" class="fmd-btn fmd-expand-btn" onclick="expandMusicPlayer()" title="Expand Full Music Station">🗖 EXPAND</button>
+                <button type="button" class="fmd-btn fmd-stop-btn" onclick="window.musicPlayer.stopAllAudio()" title="Stop Audio Completely">⏹</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Engine Scripts -->
+    <script src="/static/music_engine.js"></script>
+    <script src="/static/home_engine.js"></script>
+    <script src="/static/world_engine.js"></script>
     <script src="/static/app.js"></script>
 </body>
 </html>
+
