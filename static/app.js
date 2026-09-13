@@ -2050,34 +2050,112 @@ function openCreatorFromApp() {
 
 function enterAsGuest() {
     playSound('click');
+    localStorage.setItem('liferpg_guest_mode', 'true');
     document.getElementById('auth-container')?.classList.add('hidden');
-    document.getElementById('creator-container')?.classList.remove('hidden');
+    
+    const saved = localStorage.getItem('liferpg_hero_profile');
+    if (saved) {
+        finishJourneyTransition(true);
+        switchAdvTab('world', true);
+    } else {
+        document.getElementById('creator-container')?.classList.remove('hidden');
+        history.pushState({ view: 'customize' }, '', '/customize');
+    }
 }
 
-// =============================================================================
-// AUTH & PERSISTENCE BACKEND INTEGRATION
-// =============================================================================
-
-function switchTab(mode) {
+function switchTab(mode, updateHistory = true) {
     playSound('tab');
-    document.querySelectorAll('.pixel-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`button[onclick="switchTab('${mode}')"]`)?.classList.add('active');
-
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-
+    if (updateHistory && (window.location.pathname === '/login' || window.location.pathname === '/register' || window.location.pathname === '/')) {
+        history.replaceState({ view: mode }, '', '/' + mode);
+    }
+    document.querySelectorAll('.auth-tab-switch .auth-tab-btn').forEach(btn => btn.classList.remove('active'));
     if (mode === 'login') {
-        loginForm?.classList.remove('hidden');
-        registerForm?.classList.add('hidden');
+        document.getElementById('tab-btn-login')?.classList.add('active');
+        document.getElementById('login-form')?.classList.remove('hidden');
+        document.getElementById('register-form')?.classList.add('hidden');
     } else {
-        loginForm?.classList.add('hidden');
-        registerForm?.classList.remove('hidden');
+        document.getElementById('tab-btn-register')?.classList.add('active');
+        document.getElementById('login-form')?.classList.add('hidden');
+        document.getElementById('register-form')?.classList.remove('hidden');
     }
 
     const loginErr = document.getElementById('login-error');
-    if (loginErr) loginErr.textContent = '';
+    if (loginErr) {
+        loginErr.textContent = '';
+        loginErr.classList.add('hidden');
+    }
     const regErr = document.getElementById('reg-error');
-    if (regErr) regErr.textContent = '';
+    if (regErr) {
+        regErr.textContent = '';
+        regErr.classList.add('hidden');
+    }
+}
+
+function togglePasswordVisibility(inputId, btnEl) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (btnEl) btnEl.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        if (btnEl) btnEl.textContent = '👁️';
+    }
+}
+
+let usernameCheckTimeout = null;
+function onUsernameInput(val) {
+    const chip = document.getElementById('reg-username-indicator');
+    if (!chip) return;
+    const clean = val.trim();
+    if (usernameCheckTimeout) clearTimeout(usernameCheckTimeout);
+    if (!clean) {
+        chip.textContent = '';
+        chip.className = 'auth-status-chip';
+        return;
+    }
+    if (clean.length < 3) {
+        chip.textContent = 'Min 3 chars';
+        chip.className = 'auth-status-chip error';
+        return;
+    }
+    chip.textContent = 'Checking...';
+    chip.className = 'auth-status-chip checking';
+    usernameCheckTimeout = setTimeout(async () => {
+        try {
+            const res = await fetch(`${baseUrl}/check-username?username=${encodeURIComponent(clean)}`);
+            const data = await res.json();
+            if (data.available) {
+                chip.textContent = '✓ Available';
+                chip.className = 'auth-status-chip success';
+            } else {
+                chip.textContent = '✗ Taken';
+                chip.className = 'auth-status-chip error';
+            }
+        } catch (e) {
+            chip.textContent = '';
+            chip.className = 'auth-status-chip';
+        }
+    }, 400);
+}
+
+function checkPasswordMatch() {
+    const p1 = document.getElementById('reg-password')?.value || '';
+    const p2 = document.getElementById('reg-confirm-password')?.value || '';
+    const chip = document.getElementById('reg-pass-indicator');
+    if (!chip) return;
+    if (!p2) {
+        chip.textContent = '';
+        chip.className = 'auth-status-chip';
+        return;
+    }
+    if (p1 === p2) {
+        chip.textContent = '✓ Match';
+        chip.className = 'auth-status-chip success';
+    } else {
+        chip.textContent = '✗ Mismatch';
+        chip.className = 'auth-status-chip error';
+    }
 }
 
 async function handleLogin(e) {
@@ -2085,7 +2163,10 @@ async function handleLogin(e) {
     const identifier = document.getElementById('login-identifier').value.trim();
     const password = document.getElementById('login-password').value;
     const errorEl = document.getElementById('login-error');
-    if (errorEl) errorEl.textContent = '';
+    if (errorEl) {
+        errorEl.textContent = '';
+        errorEl.classList.add('hidden');
+    }
 
     try {
         const formData = new URLSearchParams();
@@ -2104,7 +2185,10 @@ async function handleLogin(e) {
         playSound('victory');
         checkAuth();
     } catch (err) {
-        if (errorEl) errorEl.textContent = err.message;
+        if (errorEl) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+        }
     }
 }
 
@@ -2117,10 +2201,16 @@ async function handleRegister(e) {
     const confirmPassword = document.getElementById('reg-confirm-password').value;
     const errorEl = document.getElementById('reg-error');
 
-    if (errorEl) errorEl.textContent = '';
+    if (errorEl) {
+        errorEl.textContent = '';
+        errorEl.classList.add('hidden');
+    }
 
     if (password !== confirmPassword) {
-        if (errorEl) errorEl.textContent = 'Passwords do not match!';
+        if (errorEl) {
+            errorEl.textContent = 'Passwords do not match!';
+            errorEl.classList.remove('hidden');
+        }
         return;
     }
 
@@ -2144,7 +2234,10 @@ async function handleRegister(e) {
         switchTab('login');
         document.getElementById('login-identifier').value = username;
     } catch (err) {
-        if (errorEl) errorEl.textContent = err.message;
+        if (errorEl) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+        }
     }
 }
 
@@ -2179,19 +2272,60 @@ async function checkAuth() {
             currentUser = await res.json();
             const logoutBtn = document.getElementById('btn-logout-top');
             if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            const settingsBtn = document.getElementById('btn-settings-top');
+            if (settingsBtn) settingsBtn.style.display = 'inline-block';
             document.getElementById('auth-container')?.classList.add('hidden');
-            document.getElementById('creator-container')?.classList.remove('hidden');
-            loadUserCharacter();
-        } else {
-            const saved = localStorage.getItem('liferpg_hero_profile');
-            if (saved) {
-                try {
-                    hero = { ...hero, ...JSON.parse(saved) };
-                    updateUIValues();
-                } catch (e) {}
+            
+            await loadUserCharacter();
+
+            const journeyKey = 'liferpg_journey_started_' + currentUser.id;
+            const hasStarted = localStorage.getItem(journeyKey);
+            if (hasStarted || (hero && (hero.level > 1 || (hero.name && hero.name !== 'Alex') || hero.gold !== 1000))) {
+                localStorage.setItem(journeyKey, 'true');
+                finishJourneyTransition(true);
+                handleRouteNavigation(true);
+            } else {
+                document.getElementById('creator-container')?.classList.remove('hidden');
+                if (window.location.pathname === '/' || window.location.pathname === '/login') {
+                    history.replaceState({ view: 'customize' }, '', '/customize');
+                }
             }
+        } else {
+            currentUser = null;
+            const rawPath = getRoutePath();
+            if (rawPath === 'register') {
+                document.getElementById('auth-container')?.classList.remove('hidden');
+                switchTab('register', false);
+            } else if (rawPath === 'login') {
+                document.getElementById('auth-container')?.classList.remove('hidden');
+                switchTab('login', false);
+            } else {
+                const guestMode = localStorage.getItem('liferpg_guest_mode');
+                const saved = localStorage.getItem('liferpg_hero_profile');
+                if (guestMode || saved) {
+                    document.getElementById('auth-container')?.classList.add('hidden');
+                    finishJourneyTransition(true);
+                    handleRouteNavigation(true);
+                } else {
+                    document.getElementById('auth-container')?.classList.remove('hidden');
+                    document.getElementById('creator-container')?.classList.add('hidden');
+                    document.getElementById('adventure-screen')?.classList.add('hidden');
+                    if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                        history.replaceState({ view: 'login' }, '', '/login');
+                    }
+                }
+            }
+            const logoutBtn = document.getElementById('btn-logout-top');
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            const settingsBtn = document.getElementById('btn-settings-top');
+            if (settingsBtn) settingsBtn.style.display = 'none';
         }
-    } catch (err) {}
+    } catch (err) {
+        currentUser = null;
+        document.getElementById('auth-container')?.classList.remove('hidden');
+        document.getElementById('creator-container')?.classList.add('hidden');
+        document.getElementById('adventure-screen')?.classList.add('hidden');
+    }
 }
 
 async function loadUserCharacter() {
@@ -2215,12 +2349,47 @@ async function logout() {
         await fetch(`${baseUrl}/logout`, { method: 'POST' });
     } catch (err) {}
     currentUser = null;
+    localStorage.removeItem('liferpg_guest_mode');
     document.getElementById('auth-container')?.classList.remove('hidden');
     document.getElementById('creator-container')?.classList.add('hidden');
     document.getElementById('adventure-screen')?.classList.add('hidden');
     const logoutBtn = document.getElementById('btn-logout-top');
     if (logoutBtn) logoutBtn.style.display = 'none';
+    const settingsBtn = document.getElementById('btn-settings-top');
+    if (settingsBtn) settingsBtn.style.display = 'none';
+    history.pushState({ view: 'login' }, '', '/login');
 }
+
+async function confirmDeleteAccount() {
+    const confirmation = prompt('Are you sure you want to permanently delete your LifeRPG account and all progression?\n\nType "DELETE" to confirm:');
+    if (confirmation !== 'DELETE') {
+        if (confirmation !== null) {
+            alert('Account deletion canceled. Confirmation text did not match.');
+        }
+        return;
+    }
+
+    try {
+        const res = await fetchWithRefresh(`${baseUrl}/user/account`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            alert('Your account and all associated character data have been permanently deleted.');
+            currentUser = null;
+            localStorage.removeItem('liferpg_hero_profile');
+            localStorage.removeItem('liferpg_guest_quests');
+            localStorage.removeItem('liferpg_home_data');
+            window.location.reload();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Failed to delete account. Please try again.');
+        }
+    } catch (e) {
+        alert('Network error while attempting to delete account.');
+    }
+}
+
 
 // =============================================================================
 // 🚀 LIFERPG ADVENTURE WORLD & DASHBOARD ENGINE
@@ -2247,8 +2416,8 @@ const VEHICLES_CATALOG = [
 
 async function beginMyJourney() {
     playSound('victory');
-    // Save to database
     if (currentUser) {
+        localStorage.setItem('liferpg_journey_started_' + currentUser.id, 'true');
         try {
             await fetchWithRefresh(`${baseUrl}/character`, {
                 method: 'POST',
@@ -2260,7 +2429,6 @@ async function beginMyJourney() {
         localStorage.setItem('liferpg_hero_profile', JSON.stringify(hero));
     }
 
-    // Open celebration modal
     const celebModal = document.getElementById('journey-celebration-modal');
     if (celebModal) {
         celebModal.classList.remove('hidden');
@@ -2272,8 +2440,11 @@ async function beginMyJourney() {
     }
 }
 
-function finishJourneyTransition() {
-    playSound('magic');
+function finishJourneyTransition(silent = false) {
+    if (!silent) playSound('magic');
+    if (currentUser) {
+        localStorage.setItem('liferpg_journey_started_' + currentUser.id, 'true');
+    }
     document.getElementById('journey-celebration-modal')?.classList.add('hidden');
     document.getElementById('creator-container')?.classList.add('hidden');
     document.getElementById('rpg-resource-bar')?.classList.add('hidden');
@@ -2289,6 +2460,10 @@ function finishJourneyTransition() {
         window.worldEngine.init('adv-world-canvas', 'adv-minimap-canvas');
         window.worldEngine.setVehicle(hero.transportation);
     }
+
+    if (window.location.pathname === '/' || window.location.pathname === '/customize') {
+        history.replaceState({ tab: 'world' }, '', '/world');
+    }
 }
 
 function returnToCreator() {
@@ -2296,6 +2471,7 @@ function returnToCreator() {
     document.getElementById('adventure-screen')?.classList.add('hidden');
     document.getElementById('creator-container')?.classList.remove('hidden');
     document.getElementById('rpg-resource-bar')?.classList.remove('hidden');
+    history.pushState({ view: 'customize' }, '', '/customize');
     updateUIValues();
 }
 
@@ -2449,9 +2625,97 @@ function toggleWorldSpeed() {
     if (btn) btn.textContent = `⚡ ${worldSpeedMultiplier}x`;
 }
 
-function switchAdvTab(tab) {
+function getRoutePath() {
+    let p = window.location.pathname.replace(/^\/+/, '').toLowerCase();
+    if (!p) return 'world';
+    return p;
+}
+
+function handleRouteNavigation(isInitial = false) {
+    const rawPath = getRoutePath();
+    const tabMap = {
+        'world': 'world',
+        'quests': 'quests',
+        'quest': 'quests',
+        'campaigns': 'campaigns',
+        'goals': 'campaigns',
+        'home': 'home',
+        'base': 'home',
+        'leaderboard': 'leaderboard',
+        'rank': 'leaderboard',
+        'analytics': 'analytics',
+        'stats': 'analytics',
+        'hero': 'hero',
+        'settings': 'settings',
+        'shop': 'shop',
+        'achievements': 'achievements',
+        'coach': 'coach'
+    };
+
+    if (rawPath === 'login' || rawPath === 'register') {
+        if (currentUser) {
+            switchAdvTab('world', true);
+        } else {
+            document.getElementById('auth-container')?.classList.remove('hidden');
+            document.getElementById('creator-container')?.classList.add('hidden');
+            document.getElementById('adventure-screen')?.classList.add('hidden');
+            switchTab(rawPath, false);
+        }
+        return;
+    }
+
+    if (rawPath === 'customize' || rawPath === 'creator') {
+        document.getElementById('auth-container')?.classList.add('hidden');
+        document.getElementById('creator-container')?.classList.remove('hidden');
+        document.getElementById('adventure-screen')?.classList.add('hidden');
+        document.getElementById('rpg-resource-bar')?.classList.remove('hidden');
+        updateUIValues();
+        return;
+    }
+
+    const targetTab = tabMap[rawPath] || 'world';
+    if (!currentUser) {
+        const guestMode = localStorage.getItem('liferpg_guest_mode');
+        const savedProfile = localStorage.getItem('liferpg_hero_profile');
+        if (!guestMode && !savedProfile) {
+            document.getElementById('auth-container')?.classList.remove('hidden');
+            document.getElementById('creator-container')?.classList.add('hidden');
+            document.getElementById('adventure-screen')?.classList.add('hidden');
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                history.replaceState({ view: 'login' }, '', '/login');
+            }
+            return;
+        }
+    }
+
+    if (isInitial && window.location.pathname === '/') {
+        history.replaceState({ tab: targetTab }, '', '/' + targetTab);
+    }
+
+    switchAdvTab(targetTab, false);
+}
+
+window.addEventListener('popstate', () => {
+    handleRouteNavigation(false);
+});
+
+function switchAdvTab(tab, updateHistory = true) {
     playSound('tab');
     currentAdvTab = tab;
+    window.currentAdvTab = tab;
+
+    if (updateHistory) {
+        history.pushState({ tab }, '', '/' + tab);
+    }
+
+    if (tab !== 'world') {
+        const promptEl = document.getElementById('adv-context-prompt');
+        if (promptEl) promptEl.classList.add('hidden');
+        if (window.worldEngine) window.worldEngine.currentPromptEntityId = null;
+    }
+
+    document.getElementById('creator-container')?.classList.add('hidden');
+    document.getElementById('adventure-screen')?.classList.remove('hidden');
 
     let targetViewId = `adv-tab-${tab}`;
     if (tab === 'hero' && !document.getElementById('adv-tab-hero')) {
@@ -2502,6 +2766,7 @@ function switchAdvTab(tab) {
         renderAdventureLogs();
     }
 }
+window.switchAdvTab = switchAdvTab;
 
 function toggleMobileMoreMenu() {
     const drawer = document.getElementById('mobile-more-drawer');

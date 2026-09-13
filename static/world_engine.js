@@ -62,8 +62,8 @@ class LifeRPGWorldEngine {
         this.floatingParticles = [];
         this.rewardGems = [];
         
-        // Proximity / Contextual Interaction
         this.nearbyEntity = null;
+        this.currentPromptEntityId = null;
         this.onContextActionTrigger = null;
         
         // Animation Loop
@@ -318,7 +318,7 @@ class LifeRPGWorldEngine {
                 this.keys[e.key] = true;
                 e.preventDefault();
             }
-            if (e.code === 'Space') {
+            if (e.code === 'Space' || e.key === 'e' || e.key === 'E') {
                 this.triggerContextAction();
             }
         });
@@ -618,7 +618,17 @@ class LifeRPGWorldEngine {
         const promptEl = document.getElementById('adv-context-prompt');
         if (!promptEl) return;
         
+        if (window.currentAdvTab && window.currentAdvTab !== 'world') {
+            promptEl.classList.add('hidden');
+            this.currentPromptEntityId = null;
+            return;
+        }
+
         if (this.nearbyEntity) {
+            const entityId = `${this.nearbyEntity.type}_${this.nearbyEntity.data.id}`;
+            if (this.currentPromptEntityId === entityId) return;
+
+            this.currentPromptEntityId = entityId;
             const item = this.nearbyEntity.data;
             promptEl.classList.remove('hidden');
             if (this.nearbyEntity.type === 'building') {
@@ -650,15 +660,22 @@ class LifeRPGWorldEngine {
             }
         } else {
             promptEl.classList.add('hidden');
+            this.currentPromptEntityId = null;
         }
     }
     
     triggerContextAction() {
         if (!this.nearbyEntity) return;
+        const promptEl = document.getElementById('adv-context-prompt');
+        if (promptEl) promptEl.classList.add('hidden');
+        this.currentPromptEntityId = null;
+
         if (this.nearbyEntity.type === 'building') {
             const b = this.nearbyEntity.data;
-            if (window.switchAdvTab) {
+            if (typeof window.switchAdvTab === 'function') {
                 window.switchAdvTab(b.actionTab);
+            } else if (typeof switchAdvTab === 'function') {
+                switchAdvTab(b.actionTab);
             }
         } else if (this.nearbyEntity.type === 'npc') {
             const npc = this.nearbyEntity.data;

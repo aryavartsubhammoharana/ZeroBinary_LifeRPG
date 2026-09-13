@@ -171,7 +171,8 @@ class HomeBuildingEngine {
     }
 
     bindEvents() {
-        if (!this.canvas) return;
+        if (!this.canvas || this._eventsBound) return;
+        this._eventsBound = true;
 
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();

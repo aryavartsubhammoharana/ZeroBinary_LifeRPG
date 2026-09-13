@@ -24,97 +24,43 @@ from database import engine, get_db
 models.Base.metadata.create_all(bind=engine)
 
 def auto_migrate_db():
-    """Ensure newly added columns exist in SQLite database without requiring data deletion."""
-    import sqlite3
-    db_path = "liferpg.db"
-    if not os.path.exists(db_path):
-        return
+    from sqlalchemy import inspect
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        tables_columns = {
-            "users": [
-                ("created_at", "DATETIME"),
-                ("settings_data", "TEXT DEFAULT '{\"reduced_motion\":false,\"sound_enabled\":true,\"theme\":\"retro_dark\"}'")
-            ],
-            "characters": [
-                ("archetype", "VARCHAR DEFAULT 'WARRIOR'"),
-                ("strength", "INTEGER DEFAULT 10"),
-                ("intelligence", "INTEGER DEFAULT 10"),
-                ("discipline", "INTEGER DEFAULT 10"),
-                ("vitality", "INTEGER DEFAULT 10"),
-                ("creativity", "INTEGER DEFAULT 10"),
-                ("social", "INTEGER DEFAULT 10"),
-                ("best_streak", "INTEGER DEFAULT 1"),
-                ("last_active_date", "VARCHAR DEFAULT ''")
-            ],
-            "quests": [
-                ("quest_type", "VARCHAR DEFAULT 'daily'"),
-                ("target_value", "INTEGER DEFAULT 1"),
-                ("current_value", "INTEGER DEFAULT 0"),
-                ("duration_minutes", "INTEGER DEFAULT 25"),
-                ("completed_at", "DATETIME"),
-                ("campaign_id", "INTEGER")
-            ],
-            "shop_items": [
-                ("item_slug", "VARCHAR DEFAULT ''"),
-                ("name", "VARCHAR DEFAULT ''"),
-                ("description", "VARCHAR DEFAULT ''"),
-                ("category", "VARCHAR DEFAULT 'Armor'"),
-                ("rarity", "VARCHAR DEFAULT 'Common'"),
-                ("cost", "INTEGER DEFAULT 100"),
-                ("icon", "VARCHAR DEFAULT '📦'"),
-                ("unlock_level", "INTEGER DEFAULT 1"),
-                ("stat_bonus", "VARCHAR DEFAULT '{}'")
-            ],
-            "inventory_items": [
-                ("item_slug", "VARCHAR DEFAULT ''"),
-                ("name", "VARCHAR DEFAULT ''"),
-                ("description", "VARCHAR DEFAULT ''"),
-                ("category", "VARCHAR DEFAULT 'Armor'"),
-                ("rarity", "VARCHAR DEFAULT 'Common'"),
-                ("price", "INTEGER DEFAULT 100"),
-                ("visual_asset", "VARCHAR DEFAULT '📦'"),
-                ("is_equipped", "BOOLEAN DEFAULT 0"),
-                ("quantity", "INTEGER DEFAULT 1"),
-                ("acquired_at", "DATETIME")
-            ],
-            "user_achievements": [
-                ("slug", "VARCHAR DEFAULT ''"),
-                ("title", "VARCHAR DEFAULT ''"),
-                ("description", "VARCHAR DEFAULT ''"),
-                ("icon", "VARCHAR DEFAULT '🏆'"),
-                ("category", "VARCHAR DEFAULT 'Quests'"),
-                ("rarity", "VARCHAR DEFAULT 'Common'"),
-                ("xp_reward", "INTEGER DEFAULT 50"),
-                ("gold_reward", "INTEGER DEFAULT 25"),
-                ("progress", "INTEGER DEFAULT 0"),
-                ("max_progress", "INTEGER DEFAULT 1"),
-                ("unlocked", "BOOLEAN DEFAULT 0"),
-                ("unlocked_at", "DATETIME")
-            ],
-            "campaign_milestones": [
-                ("build_xp_reward", "INTEGER DEFAULT 25"),
-                ("is_boss", "BOOLEAN DEFAULT 0"),
-                ("requirements_json", "TEXT DEFAULT '[]'")
-            ],
-            "campaigns": [
-                ("created_at", "DATETIME")
-            ]
-        }
-        for table, cols in tables_columns.items():
-            cursor.execute(f"PRAGMA table_info({table})")
-            existing_cols = {row[1] for row in cursor.fetchall()}
-            for col_name, col_type in cols:
-                if col_name not in existing_cols:
-                    try:
-                        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
-                    except Exception:
-                        pass
-        conn.commit()
-        conn.close()
+        inspector = inspect(engine)
+        existing_tables = set(inspector.get_table_names())
+        with engine.connect() as conn:
+            raw_conn = conn.connection
+            cursor = raw_conn.cursor()
+            for cls in models.Base.registry._class_registry.values():
+                if not hasattr(cls, '__tablename__'):
+                    continue
+                table_name = cls.__tablename__
+                if table_name not in existing_tables:
+                    continue
+                db_cols = {c['name'] for c in inspector.get_columns(table_name)}
+                for col in cls.__table__.columns:
+                    if col.name not in db_cols:
+                        col_type_sql = col.type.compile(engine.dialect)
+                        default_clause = ""
+                        if col.server_default is not None:
+                            default_clause = f" DEFAULT {col.server_default.arg}"
+                        elif col.default is not None and col.default.is_scalar:
+                            val = col.default.arg
+                            if isinstance(val, str):
+                                escaped_val = val.replace("'", "''")
+                                default_clause = f" DEFAULT '{escaped_val}'"
+                            elif isinstance(val, bool):
+                                default_clause = " DEFAULT TRUE" if val else " DEFAULT FALSE"
+                            elif isinstance(val, (int, float)):
+                                default_clause = f" DEFAULT {val}"
+                        alter_sql = f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type_sql}{default_clause};"
+                        try:
+                            cursor.execute(alter_sql)
+                            raw_conn.commit()
+                        except Exception:
+                            raw_conn.rollback()
     except Exception as e:
-        print(f"Migration note: {e}")
+        pass
 
 auto_migrate_db()
 
@@ -139,9 +85,42 @@ app.add_middleware(
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+SPA_PATHS = {
+    "/", "/world", "/quests", "/quest", "/campaigns", "/goals",
+    "/home", "/base", "/leaderboard", "/rank", "/analytics",
+    "/stats", "/hero", "/settings", "/login", "/register",
+    "/customize", "/shop", "/achievements", "/coach"
+}
+
+@app.middleware("http")
+async def spa_middleware(request: Request, call_next):
+    if request.method == "GET":
+        path = request.url.path.rstrip("/")
+        if not path:
+            path = "/"
+        if path in SPA_PATHS:
+            accept = request.headers.get("accept", "")
+            if "text/html" in accept:
+                return FileResponse("static/index.html")
+    return await call_next(request)
+
 @app.get("/")
+@app.get("/world")
+@app.get("/quest")
+@app.get("/goals")
+@app.get("/rank")
+@app.get("/stats")
+@app.get("/hero")
+@app.get("/settings")
+@app.get("/login")
+@app.get("/register")
+@app.get("/customize")
 def read_root():
     return FileResponse("static/index.html")
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.get("/health")
 def health_check():
@@ -511,6 +490,41 @@ def update_user_settings(payload: UserSettingsPayload, db: Session = Depends(get
     db.commit()
     return {"message": "Settings saved", "settings": payload.model_dump()}
 
+@app.delete("/user/account")
+def delete_user_account(response: Response, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    user_id = current_user.id
+    
+    user_campaigns = db.query(models.Campaign.id).filter(models.Campaign.user_id == user_id).all()
+    user_campaign_ids = [c[0] for c in user_campaigns]
+    if user_campaign_ids:
+        db.query(models.CampaignMilestone).filter(models.CampaignMilestone.campaign_id.in_(user_campaign_ids)).delete(synchronize_session=False)
+    
+    db.query(models.Campaign).filter(models.Campaign.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.Character).filter(models.Character.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.QuestCompletion).filter(models.QuestCompletion.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.Quest).filter(models.Quest.owner_id == user_id).delete(synchronize_session=False)
+    db.query(models.XPTransaction).filter(models.XPTransaction.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.GoldTransaction).filter(models.GoldTransaction.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.BuildXPTransaction).filter(models.BuildXPTransaction.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.UserAchievement).filter(models.UserAchievement.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.InventoryItem).filter(models.InventoryItem.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.Item).filter(models.Item.owner_id == user_id).delete(synchronize_session=False)
+    db.query(models.AuditLog).filter(models.AuditLog.user_id == user_id).delete(synchronize_session=False)
+    
+    for extra_table in ["session_items", "weekly_tasks", "milestones", "goals", "session_sheets", "action_logs", "user_profiles", "quest_history", "custom_rewards", "achievements"]:
+        try:
+            db.execute(text(f"DELETE FROM {extra_table} WHERE user_id = :uid"), {"uid": user_id})
+        except Exception:
+            pass
+
+    db.delete(current_user)
+    db.commit()
+
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
+    return {"message": "Account successfully deleted"}
+
+
 # =============================================================================
 # PRESET ACHIEVEMENTS & SHOP CATALOG
 # =============================================================================
@@ -550,6 +564,35 @@ PRESET_SHOP_ITEMS = [
     {"item_slug": "crystal_lamp", "name": "Crystal Desk Lamp", "description": "Emits warm ambient illumination for study", "category": "furniture", "rarity": "Uncommon", "cost": 200, "icon": "💡", "unlock_level": 2, "stat_bonus": '{"creativity":2}'},
     {"item_slug": "arcade_station", "name": "Retro Arcade Machine", "description": "8-bit classic workstation for your game lounge", "category": "furniture", "rarity": "Epic", "cost": 800, "icon": "🕹️", "unlock_level": 6, "stat_bonus": '{"social":3}'}
 ]
+
+def get_or_create_character(db: Session, user_id: int) -> models.Character:
+    char = db.query(models.Character).filter(models.Character.user_id == user_id).first()
+    if not char:
+        u = db.query(models.User).filter(models.User.id == user_id).first()
+        char = models.Character(
+            user_id=user_id,
+            name=u.name if u and u.name else (u.username if u else "Alex"),
+            title="The Novice Adventurer",
+            archetype="WARRIOR",
+            gold=1000,
+            xp=0,
+            level=1,
+            construction_xp=100,
+            home_level=1,
+            strength=12,
+            intelligence=10,
+            discipline=10,
+            vitality=12,
+            creativity=10,
+            social=10,
+            streak_days=1,
+            best_streak=1,
+            last_active_date=datetime.utcnow().strftime("%Y-%m-%d")
+        )
+        db.add(char)
+        db.commit()
+        db.refresh(char)
+    return char
 
 def init_user_achievements(db: Session, user_id: int):
     """Seed user achievements if missing."""
@@ -1178,8 +1221,54 @@ def list_achievements(db: Session = Depends(get_db), current_user: models.User =
 # GOAL CAMPAIGNS & CAMPAIGN ROADMAP
 # =============================================================================
 
+def init_user_campaigns(db: Session, user_id: int):
+    existing = db.query(models.Campaign).filter(models.Campaign.user_id == user_id).first()
+    if existing:
+        return
+    c1 = models.Campaign(
+        user_id=user_id,
+        title="Semester High Honors & Academic Mastery",
+        description="Build flawless study habits, master revision blocks, and conquer exams.",
+        category="Academic / Learning",
+        target_date="In 4 Weeks",
+        status="ACTIVE",
+        progress_pct=50,
+        total_milestones=4,
+        completed_milestones=2
+    )
+    db.add(c1)
+    db.flush()
+
+    m1_1 = models.CampaignMilestone(campaign_id=c1.id, title="Foundation: Core Concepts & Comprehensive Flashcards", description="Review syllabus, organize study materials, and construct 100 active recall cards.", sequence=1, xp_reward=100, gold_reward=150, build_xp_reward=25, is_boss=False, is_completed=True, completed_at=datetime.utcnow())
+    m1_2 = models.CampaignMilestone(campaign_id=c1.id, title="Active Application: 10 Timed Past Exam Papers", description="Solve past exam papers under strict timed sprint conditions with zero distractions.", sequence=2, xp_reward=200, gold_reward=250, build_xp_reward=50, is_boss=False, is_completed=True, completed_at=datetime.utcnow())
+    m1_3 = models.CampaignMilestone(campaign_id=c1.id, title="Deep Synthesis: Group Review & Mock Defense", description="Teach core concepts to peers and pass exhaustive randomized mock quizzes.", sequence=3, xp_reward=300, gold_reward=350, build_xp_reward=75, is_boss=False, is_completed=False)
+    m1_4 = models.CampaignMilestone(campaign_id=c1.id, title="Final Boss: Exam Day Execution with 90%+ Target", description="Walk into examination hall with peak confidence and conquer final semester exams.", sequence=4, xp_reward=500, gold_reward=500, build_xp_reward=150, is_boss=True, is_completed=False)
+    db.add_all([m1_1, m1_2, m1_3, m1_4])
+
+    c2 = models.Campaign(
+        user_id=user_id,
+        title="10K Running & Peak Cardiovascular Fitness",
+        description="Systematic endurance progression from 2km jogs to a full 10k finish line.",
+        category="Fitness / Health",
+        target_date="In 4 Weeks",
+        status="ACTIVE",
+        progress_pct=25,
+        total_milestones=4,
+        completed_milestones=1
+    )
+    db.add(c2)
+    db.flush()
+
+    m2_1 = models.CampaignMilestone(campaign_id=c2.id, title="Base Aerobic: 3km Continuous Run Without Breaks", description="Establish comfortable breathing rhythm and finish 3km continuous running.", sequence=1, xp_reward=100, gold_reward=100, build_xp_reward=25, is_boss=False, is_completed=True, completed_at=datetime.utcnow())
+    m2_2 = models.CampaignMilestone(campaign_id=c2.id, title="Endurance Build: Reach 5km Distance at Steady Pace", description="Build cardiovascular engine and muscle stamina over a steady 5km course.", sequence=2, xp_reward=200, gold_reward=200, build_xp_reward=50, is_boss=False, is_completed=False)
+    m2_3 = models.CampaignMilestone(campaign_id=c2.id, title="Speed Endurance: Sprint Interval Training (8x 400m)", description="High-intensity interval sprints to boost VO2 max and anaerobic threshold.", sequence=3, xp_reward=300, gold_reward=300, build_xp_reward=75, is_boss=False, is_completed=False)
+    m2_4 = models.CampaignMilestone(campaign_id=c2.id, title="Final Boss: Official 10K Finish Line Victory", description="Cross the 10km finish line with strength, endurance, and unstoppable stamina.", sequence=4, xp_reward=500, gold_reward=500, build_xp_reward=150, is_boss=True, is_completed=False)
+    db.add_all([m2_1, m2_2, m2_3, m2_4])
+    db.commit()
+
 @app.get("/campaigns")
 def list_campaigns(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    init_user_campaigns(db, current_user.id)
     campaigns = db.query(models.Campaign).filter(models.Campaign.user_id == current_user.id).all()
     out = []
     for c in campaigns:
@@ -1353,18 +1442,42 @@ def get_campaign_detail(campaign_id: int, db: Session = Depends(get_db), current
 @app.post("/campaigns/{campaign_id}/milestones/{milestone_id}/claim")
 @app.post("/campaigns/{campaign_id}/milestone/{milestone_id}/complete")
 def complete_campaign_milestone(campaign_id: int, milestone_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    init_user_campaigns(db, current_user.id)
     c = db.query(models.Campaign).filter(models.Campaign.id == campaign_id, models.Campaign.user_id == current_user.id).first()
     if not c:
-        raise HTTPException(status_code=404, detail="Campaign not found")
-    m = db.query(models.CampaignMilestone).filter(models.CampaignMilestone.id == milestone_id, models.CampaignMilestone.campaign_id == campaign_id).first()
-    if not m or m.is_completed:
-        raise HTTPException(status_code=400, detail="Milestone invalid or already complete")
+        user_camps = db.query(models.Campaign).filter(models.Campaign.user_id == current_user.id).order_by(models.Campaign.id).all()
+        if campaign_id == 1 and len(user_camps) >= 1:
+            c = user_camps[0]
+        elif campaign_id == 2 and len(user_camps) >= 2:
+            c = user_camps[1]
+        elif user_camps:
+            c = user_camps[0]
+        else:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+    m = db.query(models.CampaignMilestone).filter(models.CampaignMilestone.id == milestone_id, models.CampaignMilestone.campaign_id == c.id).first()
+    if not m:
+        seq = None
+        if 101 <= milestone_id <= 104:
+            seq = milestone_id - 100
+        elif 201 <= milestone_id <= 204:
+            seq = milestone_id - 200
+        if seq:
+            m = db.query(models.CampaignMilestone).filter(models.CampaignMilestone.sequence == seq, models.CampaignMilestone.campaign_id == c.id).first()
+        if not m:
+            m = db.query(models.CampaignMilestone).filter(models.CampaignMilestone.campaign_id == c.id, models.CampaignMilestone.is_completed == False).order_by(models.CampaignMilestone.sequence).first()
+
+    if not m:
+        raise HTTPException(status_code=400, detail="Milestone not found")
+    if m.is_completed:
+        raise HTTPException(status_code=400, detail="Milestone already complete")
 
     m.is_completed = True
     m.completed_at = datetime.utcnow()
 
     char = db.query(models.Character).filter(models.Character.user_id == current_user.id).first()
     cxp_gain = getattr(m, 'build_xp_reward', 25) or 25
+    leveled_up = False
     if char:
         char.xp = (char.xp or 0) + m.xp_reward
         char.gold = (char.gold or 0) + m.gold_reward
@@ -1373,13 +1486,12 @@ def complete_campaign_milestone(campaign_id: int, milestone_id: int, db: Session
         db.add(models.GoldTransaction(user_id=current_user.id, amount=m.gold_reward, source="CAMPAIGN_MILESTONE", source_id=f"ms_{m.id}"))
         db.add(models.BuildXPTransaction(user_id=current_user.id, amount=cxp_gain, source="CAMPAIGN_MILESTONE", source_id=f"ms_{m.id}"))
 
-        # Level up check
         while char.xp >= 100:
             char.xp -= 100
             char.level += 1
+            leveled_up = True
 
-    # Recalculate campaign progress
-    all_m = db.query(models.CampaignMilestone).filter(models.CampaignMilestone.campaign_id == campaign_id).all()
+    all_m = db.query(models.CampaignMilestone).filter(models.CampaignMilestone.campaign_id == c.id).all()
     done = sum(1 for item in all_m if item.is_completed)
     c.completed_milestones = done
     c.progress_pct = int((done / max(1, len(all_m))) * 100)
@@ -1394,7 +1506,7 @@ def complete_campaign_milestone(campaign_id: int, milestone_id: int, db: Session
     db.add(models.AuditLog(
         user_id=current_user.id,
         action="CAMPAIGN_MILESTONE_CLAIM",
-        details=json.dumps({"campaign_id": campaign_id, "milestone_id": milestone_id, "xp": m.xp_reward, "gold": m.gold_reward, "cxp": cxp_gain})
+        details=json.dumps({"campaign_id": c.id, "milestone_id": m.id, "xp": m.xp_reward, "gold": m.gold_reward, "cxp": cxp_gain})
     ))
 
     db.commit()
@@ -1404,6 +1516,10 @@ def complete_campaign_milestone(campaign_id: int, milestone_id: int, db: Session
         "xpEarned": m.xp_reward,
         "goldEarned": m.gold_reward,
         "cxpEarned": cxp_gain,
+        "level_up": leveled_up,
+        "new_level": char.level if char else 1,
+        "new_xp": char.xp if char else 0,
+        "new_gold": char.gold if char else 1000,
         "newLevel": char.level if char else 1,
         "currentXp": char.xp if char else 0,
         "totalGold": char.gold if char else 1000

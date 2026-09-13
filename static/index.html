@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Retro Pixel RPG Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Silkscreen:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="rpg-body">
@@ -37,76 +38,192 @@
             <div class="top-nav-actions">
                 <button type="button" class="pixel-btn btn-sm btn-gold" onclick="openProgressionModal()">⭐ ROADMAP</button>
                 <button type="button" class="pixel-btn btn-sm btn-slate" onclick="toggleSoundFx()" id="btn-sound-toggle">🔊 SFX ON</button>
+                <button type="button" class="pixel-btn btn-sm btn-slate" id="btn-settings-top" onclick="switchAdvTab('settings')" style="display:none;">⚙️ SETTINGS</button>
                 <button type="button" class="pixel-btn btn-sm btn-slate" id="btn-logout-top" onclick="logout()" style="display:none;">LOGOUT</button>
             </div>
         </nav>
 
-        <!-- AUTH MODAL -->
-        <div class="rpg-modal-frame hidden" id="auth-container">
-            <div class="frame-chain chain-left"></div>
-            <div class="frame-chain chain-right"></div>
-            <div class="frame-vines vine-tl"></div>
-            <div class="frame-vines vine-tr"></div>
-            <div class="frame-vines vine-bl"></div>
-            <div class="frame-vines vine-br"></div>
+        <!-- AUTH GATEWAY MODAL -->
+        <div class="auth-gateway-frame" id="auth-container">
+            <div class="auth-gateway-card">
+                <!-- Left Showcase Column -->
+                <div class="auth-showcase-column">
+                    <div class="auth-brand-header">
+                        <span class="auth-brand-badge">⚔️ REAL-WORLD RPG</span>
+                        <h1 class="auth-brand-title">LifeRPG</h1>
+                        <p class="auth-brand-tagline">Gamify your daily life, build unstoppable habits, and level up your real-world character.</p>
+                    </div>
 
-            <div class="rpg-header-plate">
-                <span class="bolt bolt-l"></span>
-                <h2 class="pixel-title">LIFERPG GATEWAY</h2>
-                <span class="bolt bolt-r"></span>
+                    <div class="auth-features-list">
+                        <div class="auth-feature-item">
+                            <div class="afi-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">⚡</div>
+                            <div class="afi-text">
+                                <strong>Real-Life Attributes</strong>
+                                <span>Level up STR, INT, VIT, DIS & FIN with every finished task.</span>
+                            </div>
+                        </div>
+
+                        <div class="auth-feature-item">
+                            <div class="afi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">🎯</div>
+                            <div class="afi-text">
+                                <strong>4-Tier Life Planning</strong>
+                                <span>Align long-term vision goals down to daily focus sprints.</span>
+                            </div>
+                        </div>
+
+                        <div class="auth-feature-item">
+                            <div class="afi-icon" style="background: rgba(74, 222, 128, 0.15); color: #4ade80;">🏆</div>
+                            <div class="afi-text">
+                                <strong>Live Global Leaderboards</strong>
+                                <span>Compete with other warriors and maintain daily consistency streaks.</span>
+                            </div>
+                        </div>
+
+                        <div class="auth-feature-item">
+                            <div class="afi-icon" style="background: rgba(192, 132, 252, 0.15); color: #c084fc;">🪙</div>
+                            <div class="afi-text">
+                                <strong>Dopamine Bazaar & Rewards</strong>
+                                <span>Earn gold to unlock voxel gear or redeem real-world dopamine treats.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-quote-box">
+                        <span class="quote-mark">“</span>
+                        <p class="quote-text">Small daily disciplines repeated consistently create legendary transformations.</p>
+                    </div>
+                </div>
+
+                <!-- Right Interactive Form Column -->
+                <div class="auth-form-column">
+                    <div class="auth-tab-switch">
+                        <button type="button" class="auth-tab-btn active" id="tab-btn-login" onclick="switchTab('login')">
+                            <span>🔑</span> Sign In
+                        </button>
+                        <button type="button" class="auth-tab-btn" id="tab-btn-register" onclick="switchTab('register')">
+                            <span>🛡️</span> Create Hero
+                        </button>
+                    </div>
+
+                    <!-- LOGIN FORM -->
+                    <form id="login-form" class="auth-form-body" onsubmit="handleLogin(event)">
+                        <div class="auth-form-heading">
+                            <h3>Welcome Back, Warrior</h3>
+                            <p>Enter your credentials to resume your journey.</p>
+                        </div>
+
+                        <div class="auth-input-field">
+                            <label for="login-identifier">
+                                <span>👤</span> Email or Username
+                            </label>
+                            <input type="text" id="login-identifier" placeholder="e.g. alex@example.com or hero_alex" required autocomplete="username">
+                        </div>
+
+                        <div class="auth-input-field">
+                            <div class="auth-field-label-row">
+                                <label for="login-password">
+                                    <span>🔒</span> Password
+                                </label>
+                            </div>
+                            <div class="auth-input-wrapper">
+                                <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password">
+                                <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('login-password', this)" title="Show/Hide Password">👁️</button>
+                            </div>
+                        </div>
+
+                        <div id="login-error" class="auth-error-banner hidden"></div>
+
+                        <button type="submit" class="auth-cta-btn primary-btn">
+                            <span>⚔️</span> Enter LifeRPG
+                        </button>
+
+                        <div class="auth-divider"><span>OR</span></div>
+
+                        <button type="button" class="auth-cta-btn guest-btn" onclick="enterAsGuest()">
+                            <span>🎮</span> Continue as Guest
+                        </button>
+
+                        <div class="auth-form-footer">
+                            <span>New warrior?</span>
+                            <button type="button" class="auth-link-btn" onclick="switchTab('register')">Create an account ➔</button>
+                        </div>
+                    </form>
+
+                    <!-- REGISTER FORM -->
+                    <form id="register-form" class="auth-form-body hidden" onsubmit="handleRegister(event)">
+                        <div class="auth-form-heading">
+                            <h3>Forge Your Hero</h3>
+                            <p>Embark on your journey with 1,000 starting gold.</p>
+                        </div>
+
+                        <div class="auth-input-field">
+                            <label for="reg-name">
+                                <span>👑</span> Hero Full Name
+                            </label>
+                            <input type="text" id="reg-name" placeholder="e.g. Alex Hunter" required autocomplete="name">
+                        </div>
+
+                        <div class="auth-fields-row">
+                            <div class="auth-input-field flex-1">
+                                <label for="reg-email">
+                                    <span>✉️</span> Email Address
+                                </label>
+                                <input type="email" id="reg-email" placeholder="name@domain.com" required autocomplete="email">
+                            </div>
+
+                            <div class="auth-input-field flex-1">
+                                <div class="auth-field-label-row">
+                                    <label for="reg-username">
+                                        <span>⚔️</span> Username
+                                    </label>
+                                    <span id="reg-username-indicator" class="auth-status-chip"></span>
+                                </div>
+                                <input type="text" id="reg-username" placeholder="unique_username" required autocomplete="username" oninput="onUsernameInput(this.value)">
+                            </div>
+                        </div>
+
+                        <div class="auth-fields-row">
+                            <div class="auth-input-field flex-1">
+                                <label for="reg-password">
+                                    <span>🔒</span> Password
+                                </label>
+                                <div class="auth-input-wrapper">
+                                    <input type="password" id="reg-password" placeholder="Min 8 characters" required autocomplete="new-password" oninput="checkPasswordMatch()">
+                                    <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('reg-password', this)" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+
+                            <div class="auth-input-field flex-1">
+                                <div class="auth-field-label-row">
+                                    <label for="reg-confirm-password">
+                                        <span>🛡️</span> Confirm
+                                    </label>
+                                    <span id="reg-pass-indicator" class="auth-status-chip"></span>
+                                </div>
+                                <div class="auth-input-wrapper">
+                                    <input type="password" id="reg-confirm-password" placeholder="Repeat password" required autocomplete="new-password" oninput="checkPasswordMatch()">
+                                    <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('reg-confirm-password', this)" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="reg-error" class="auth-error-banner hidden"></div>
+
+                        <button type="submit" class="auth-cta-btn primary-btn">
+                            <span>🛡️</span> Create Hero & Embark
+                        </button>
+
+                        <div class="auth-form-footer">
+                            <span>Already registered?</span>
+                            <button type="button" class="auth-link-btn" onclick="switchTab('login')">Sign in here ➔</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <div class="tabs pixel-tabs">
-                <button class="pixel-btn tab-btn active" onclick="switchTab('login')">LOGIN</button>
-                <button class="pixel-btn tab-btn" onclick="switchTab('register')">REGISTER</button>
-            </div>
-
-            <form id="login-form" onsubmit="handleLogin(event)">
-                <div class="pixel-input-group">
-                    <label>WARRIOR IDENTIFIER</label>
-                    <input type="text" id="login-identifier" placeholder="Email or Username" required>
-                </div>
-                <div class="pixel-input-group">
-                    <label>SECRET PASSPHRASE</label>
-                    <input type="password" id="login-password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="pixel-btn btn-green btn-large">ENTER REALM</button>
-                <button type="button" class="pixel-btn btn-cyan" onclick="enterAsGuest()">PLAY AS GUEST</button>
-                <p id="login-error" class="error pixel-error"></p>
-            </form>
-
-            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
-                <div class="pixel-input-group">
-                    <label>HERO NAME</label>
-                    <input type="text" id="reg-name" placeholder="Full Name" required>
-                </div>
-                <div class="form-row">
-                    <div class="pixel-input-group flex-1">
-                        <label>EMAIL</label>
-                        <input type="email" id="reg-email" placeholder="Email" required>
-                    </div>
-                    <div class="pixel-input-group flex-1">
-                        <label>USERNAME</label>
-                        <input type="text" id="reg-username" placeholder="Username" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="pixel-input-group flex-1">
-                        <label>PASSWORD</label>
-                        <input type="password" id="reg-password" placeholder="Password (min 8)" required>
-                    </div>
-                    <div class="pixel-input-group flex-1">
-                        <label>CONFIRM</label>
-                        <input type="password" id="reg-confirm-password" placeholder="Confirm" required>
-                    </div>
-                </div>
-                <button type="submit" class="pixel-btn btn-green btn-large">FORGE ACCOUNT</button>
-                <p id="reg-error" class="error pixel-error"></p>
-            </form>
         </div>
 
         <!-- MAIN CHARACTER CREATOR (Clean, Bit Heroes Retro Layout) -->
-        <div class="creator-container" id="creator-container">
+        <div class="creator-container hidden" id="creator-container">
             <!-- Suspension Chains & Hanging Vines -->
             <div class="creator-hanging-chain chain-l"></div>
             <div class="creator-hanging-chain chain-r"></div>
@@ -586,7 +703,10 @@
                                 <span class="tab-nav-crumb">STATS / CHARACTER PROGRESSION</span>
                                 <h2 class="tab-main-title">REAL-LIFE ATTRIBUTES & MASTERY</h2>
                             </div>
-                            <button type="button" class="pixel-btn btn-sm btn-gold" onclick="openProgressionModal()">⭐ ROADMAP</button>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="pixel-btn btn-sm btn-cyan" onclick="returnToCreator()">🎨 CUSTOMIZE AVATAR</button>
+                                <button type="button" class="pixel-btn btn-sm btn-gold" onclick="openProgressionModal()">⭐ ROADMAP</button>
+                            </div>
                         </div>
 
                         <!-- Top 4-Metric Progression KPI Row -->
@@ -1168,6 +1288,16 @@
                                     <button type="button" class="pixel-btn btn-sm btn-rose" onclick="logout()">LOGOUT</button>
                                 </div>
                             </div>
+
+                            <div class="adv-panel" style="border-color: rgba(244, 63, 94, 0.4);">
+                                <div class="panel-header">
+                                    <h3 class="panel-title" style="color: #fb7185;">⚠️ DANGER ZONE</h3>
+                                </div>
+                                <p class="panel-desc" style="color: #fda4af;">Permanently delete your user account, character, inventory, quests, and all RPG progression. This action cannot be undone.</p>
+                                <div class="backup-actions-row">
+                                    <button type="button" class="pixel-btn btn-sm btn-rose" onclick="confirmDeleteAccount()" style="background: #e11d48; border-color: #f43f5e; color: #fff;">🗑️ PERMANENTLY DELETE ACCOUNT</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1218,6 +1348,9 @@
                     </button>
                     <button class="adv-nav-btn" id="nav-btn-hero" onclick="switchAdvTab('hero')">
                         <span class="nav-label">hero</span>
+                    </button>
+                    <button class="adv-nav-btn" id="nav-btn-settings" onclick="switchAdvTab('settings')">
+                        <span class="nav-label">settings</span>
                     </button>
                 </nav>
 
