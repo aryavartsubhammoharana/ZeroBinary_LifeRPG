@@ -5,7 +5,12 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./liferpg.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    if os.getenv("VERCEL"):
+        DATABASE_URL = "sqlite:////tmp/liferpg.db"
+    else:
+        DATABASE_URL = "sqlite:///./liferpg.db"
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
@@ -17,7 +22,7 @@ def auto_migrate():
     if not DATABASE_URL.startswith("sqlite"):
         return
     import sqlite3
-    db_path = DATABASE_URL.replace("sqlite:///", "").replace("sqlite://", "")
+    db_path = DATABASE_URL.replace("sqlite:////", "/").replace("sqlite:///", "").replace("sqlite://", "")
     if not os.path.exists(db_path):
         return
     conn = sqlite3.connect(db_path)

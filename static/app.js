@@ -6081,5 +6081,63 @@ function showAchievementToast(achievement) {
 // Initialize on page load
 loadAdventureData();
 
+let appCurrentBuildId = null;
+
+async function checkAppVersion() {
+    try {
+        const res = await fetch('/version?t=' + Date.now());
+        if (!res.ok) return;
+        const data = await res.json();
+        const incomingId = data.build_id || data.commit;
+        if (!incomingId) return;
+
+        if (!appCurrentBuildId) {
+            appCurrentBuildId = incomingId;
+            return;
+        }
+
+        if (incomingId !== appCurrentBuildId) {
+            appCurrentBuildId = incomingId;
+            showUpdateNotification();
+        }
+    } catch (e) {}
+}
+
+function showUpdateNotification() {
+    if (document.getElementById('rpg-update-notification')) return;
+    playSound('victory');
+    const banner = document.createElement('div');
+    banner.id = 'rpg-update-notification';
+    banner.className = 'rpg-update-banner';
+    banner.innerHTML = `
+        <span style="font-size: 1.3rem;">🚀</span>
+        <div>
+            <div><strong>NEW UPDATE DEPLOYED!</strong></div>
+            <div style="font-size: 0.72rem; opacity: 0.9;">Fresh version live on GitHub. Refreshing in <span id="update-countdown">3</span>s...</div>
+        </div>
+        <button type="button" class="pixel-btn btn-sm btn-gold" onclick="window.location.reload()" style="margin-left: 8px;">UPDATE NOW</button>
+    `;
+    document.body.appendChild(banner);
+
+    let countdown = 3;
+    const timer = setInterval(() => {
+        countdown--;
+        const el = document.getElementById('update-countdown');
+        if (el) el.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(timer);
+            window.location.reload();
+        }
+    }, 1000);
+}
+
+setInterval(checkAppVersion, 30000);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        checkAppVersion();
+    }
+});
+checkAppVersion();
+
 
 

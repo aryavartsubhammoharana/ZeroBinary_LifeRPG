@@ -64,7 +64,11 @@ def auto_migrate_db():
 
 auto_migrate_db()
 
-IS_PRODUCTION = os.getenv("APP_ENV", "development").lower() == "production"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+INDEX_HTML = os.path.join(STATIC_DIR, "index.html")
+
+IS_PRODUCTION = os.getenv("APP_ENV", "development").lower() == "production" or bool(os.getenv("VERCEL"))
 COOKIE_SAMESITE = "none" if IS_PRODUCTION else "lax"
 COOKIE_SECURE = IS_PRODUCTION
 CORS_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
@@ -76,14 +80,15 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[CORS_ORIGIN],
+    allow_origins=[CORS_ORIGIN, "http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+os.makedirs(STATIC_DIR, exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 SPA_PATHS = {
     "/", "/world", "/quests", "/quest", "/campaigns", "/goals",
@@ -91,6 +96,16 @@ SPA_PATHS = {
     "/stats", "/hero", "/settings", "/login", "/register",
     "/customize", "/shop", "/achievements", "/coach"
 }
+
+APP_VERSION = os.getenv("APP_VERSION", "2.1.0")
+APP_BUILD_ID = os.getenv("VERCEL_GIT_COMMIT_SHA", os.getenv("BUILD_ID", datetime.utcnow().strftime("%Y%m%d%H%M%S")))
+
+def serve_index():
+    res = FileResponse(INDEX_HTML)
+    res.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    res.headers["Pragma"] = "no-cache"
+    res.headers["Expires"] = "0"
+    return res
 
 @app.middleware("http")
 async def spa_middleware(request: Request, call_next):
@@ -101,7 +116,7 @@ async def spa_middleware(request: Request, call_next):
         if path in SPA_PATHS:
             accept = request.headers.get("accept", "")
             if "text/html" in accept:
-                return FileResponse("static/index.html")
+                return serve_index()
     return await call_next(request)
 
 @app.get("/")
@@ -116,15 +131,22 @@ async def spa_middleware(request: Request, call_next):
 @app.get("/register")
 @app.get("/customize")
 def read_root():
-    return FileResponse("static/index.html")
+    return serve_index()
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+@app.get("/version")
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "app": "LifeRPG Master Engine", "version": "2.0.0"}
+    return {
+        "status": "ok",
+        "app": "LifeRPG Master Engine",
+        "version": APP_VERSION,
+        "build_id": APP_BUILD_ID,
+        "commit": os.getenv("VERCEL_GIT_COMMIT_SHA", "local")[:7]
+    }
 
 # =============================================================================
 # PYDANTIC SCHEMAS

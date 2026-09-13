@@ -1,0 +1,9 @@
+.git
+.pytest_cache
+tests
+__pycache__
+*.pyc
+*.pyo
+*.db
+.env
+.user_uploaded
