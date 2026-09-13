@@ -267,7 +267,7 @@
                         <!-- NAME -->
                         <div class="clean-control-row">
                             <span class="clean-label">NAME</span>
-                            <input type="text" class="clean-name-input" id="char-name-input" maxlength="20" minlength="2" value="GSJustin" placeholder="Enter name..." oninput="onNameChange(this.value)">
+                            <input type="text" class="clean-name-input" id="char-name-input" maxlength="20" minlength="2" value="Hero" placeholder="Enter name..." oninput="onNameChange(this.value)">
                         </div>
 
                         <!-- LIFESTYLE PRESET -->
@@ -417,7 +417,7 @@
                             <span class="gold-tag">🪙 <span id="preview-gold">1,000</span> Gold</span>
                         </div>
                         
-                        <div class="stage-name" id="preview-hero-name">GSJustin</div>
+                        <div class="stage-name" id="preview-hero-name">Hero</div>
                         <div class="stage-title" id="preview-hero-title">"The Beginner"</div>
 
                         <!-- Canvas Box -->
@@ -450,7 +450,7 @@
             </div>
         </div>
 
-        <!-- MAIN LIFE RPG ADVENTURE / WORLD DASHBOARD SCREEN (ChronoQuest Aesthetic) -->
+        <!-- MAIN LIFE RPG ADVENTURE / WORLD DASHBOARD SCREEN (LifeRPG Aesthetic) -->
         <div class="adventure-dashboard-container hidden" id="adventure-screen">
             
             <!-- Top Adventure Header HUD Bar -->
@@ -458,7 +458,7 @@
                 <div class="adv-brand">
                     <span class="adv-logo-icon">⚔️</span>
                     <div class="adv-logo-text">
-                        <h1 class="adv-title">CHRONOQUEST</h1>
+                        <h1 class="adv-title">LIFERPG</h1>
                         <span class="adv-tagline">REAL LIFE • REAL XP</span>
                     </div>
                 </div>
@@ -514,7 +514,7 @@
                             <canvas id="adv-mini-avatar" width="34" height="34"></canvas>
                         </div>
                         <div class="player-info">
-                            <span class="player-name" id="adv-hero-name">GSJustin</span>
+                            <span class="player-name" id="adv-hero-name">Hero</span>
                             <span class="player-level" id="adv-hero-lvl">LV 01 WARRIOR</span>
                         </div>
                     </div>
@@ -811,51 +811,67 @@
                                 </div>
                             </div>
 
-                            <!-- Right: Activity Overview & Level Perks -->
+                            <!-- Right: Hero Spider Radar & Activity Overview -->
                             <div class="adv-panel">
                                 <div class="panel-header">
                                     <div class="panel-title-group">
-                                        <span class="panel-icon">📊</span>
-                                        <h3 class="panel-title">ACTIVITY OVERVIEW</h3>
+                                        <span class="panel-icon">🕸️</span>
+                                        <h3 class="panel-title">HERO ATTRIBUTE RADAR</h3>
                                     </div>
                                     <span class="badge-lvl" id="stats-tab-level-badge">LV 01</span>
                                 </div>
 
+                                <!-- Spider Radar Graph Container -->
+                                <div class="spider-radar-box">
+                                    <div class="spider-radar-top-info">
+                                        <span class="radar-tag">5-AXIS PENTAGON RADAR</span>
+                                        <span class="radar-total" id="spider-total-power">TOTAL: 62 PTS</span>
+                                    </div>
+                                    <div class="spider-canvas-wrapper">
+                                        <canvas id="hero-spider-canvas" width="360" height="280"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Activity Distribution Overview -->
                                 <div class="activity-bars-box">
+                                    <div class="act-section-heading">
+                                        <span>ACTIVITY BREAKDOWN</span>
+                                        <span id="act-completed-count">5 DIMENSIONS</span>
+                                    </div>
                                     <div class="act-bar-item">
                                         <div class="act-label-row">
                                             <span>Knowledge & Learning</span>
-                                            <span>35%</span>
+                                            <span id="act-pct-knowledge">35%</span>
                                         </div>
-                                        <div class="act-track"><div class="act-fill fill-cyan" style="width: 35%;"></div></div>
+                                        <div class="act-track"><div class="act-fill fill-cyan" id="act-bar-knowledge" style="width: 35%;"></div></div>
                                     </div>
                                     <div class="act-bar-item">
                                         <div class="act-label-row">
                                             <span>Fitness & Exercise</span>
-                                            <span>25%</span>
+                                            <span id="act-pct-fitness">25%</span>
                                         </div>
-                                        <div class="act-track"><div class="act-fill fill-green" style="width: 25%;"></div></div>
+                                        <div class="act-track"><div class="act-fill fill-green" id="act-bar-fitness" style="width: 25%;"></div></div>
                                     </div>
                                     <div class="act-bar-item">
                                         <div class="act-label-row">
                                             <span>Vitality & Health</span>
-                                            <span>20%</span>
+                                            <span id="act-pct-vitality">20%</span>
                                         </div>
-                                        <div class="act-track"><div class="act-fill fill-rose" style="width: 20%;"></div></div>
+                                        <div class="act-track"><div class="act-fill fill-rose" id="act-bar-vitality" style="width: 20%;"></div></div>
                                     </div>
                                     <div class="act-bar-item">
                                         <div class="act-label-row">
                                             <span>Discipline & Focus</span>
-                                            <span>15%</span>
+                                            <span id="act-pct-discipline">15%</span>
                                         </div>
-                                        <div class="act-track"><div class="act-fill fill-gold" style="width: 15%;"></div></div>
+                                        <div class="act-track"><div class="act-fill fill-gold" id="act-bar-discipline" style="width: 15%;"></div></div>
                                     </div>
                                     <div class="act-bar-item">
                                         <div class="act-label-row">
                                             <span>Finance & Wealth</span>
-                                            <span>5%</span>
+                                            <span id="act-pct-finance">5%</span>
                                         </div>
-                                        <div class="act-track"><div class="act-fill fill-emerald" style="width: 5%;"></div></div>
+                                        <div class="act-track"><div class="act-fill fill-emerald" id="act-bar-finance" style="width: 5%;"></div></div>
                                     </div>
                                 </div>
 
@@ -1667,7 +1683,7 @@
 
             <div class="celebration-body">
                 <div class="lvlup-burst-badge" id="lvlup-badge-val">LVL 05</div>
-                <h3 class="victory-name" id="lvlup-hero-name">GSJustin</h3>
+                <h3 class="victory-name" id="lvlup-hero-name">Hero</h3>
                 
                 <div class="stat-boosts-box" id="lvlup-stat-boosts">
                     <span class="boost-tag">+5 INT</span>
@@ -1750,7 +1766,7 @@
 
             <div class="celebration-body">
                 <canvas id="celebration-avatar-canvas" width="150" height="180"></canvas>
-                <h2 class="victory-name" id="celebration-hero-name">GSJustin</h2>
+                <h2 class="victory-name" id="celebration-hero-name">Hero</h2>
                 <p class="victory-title" id="celebration-hero-title">"The Beginner"</p>
                 <div class="victory-banner">"YOUR JOURNEY BEGINS NOW."</div>
                 <p class="victory-subtext">Starter Gold: 🪙 1,000 • Level 1 initialized.</p>

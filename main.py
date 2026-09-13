@@ -2098,7 +2098,7 @@ def get_base_blueprints(db: Session = Depends(get_db), current_user: models.User
 def get_world_state(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     char = db.query(models.Character).filter(models.Character.user_id == current_user.id).first()
     return {
-        "realm": "ChronoQuest Overworld",
+        "realm": "LifeRPG Overworld",
         "current_zone": char.current_zone if char else "Homestead • Scholar Grove",
         "transportation": char.transportation if char else "Walk",
         "journey_km": char.journey_km if char else 0,

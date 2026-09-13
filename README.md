@@ -583,3 +583,11 @@ Run the full test suite in under 7 seconds:
 .\.venv\Scripts\pytest.exe -v
 ```
 All 18 tests pass covering authentication, row-level data isolation, quest CRUD, attribute progression (gym $\rightarrow$ strength, study $\rightarrow$ knowledge), custom rewards, and daily login streaks.
+
+---
+
+## 👥 Contributors
+
+- **Aryavart Subham Moharana** ([@aryavartsubhammoharana](https://github.com/aryavartsubhammoharana))
+- **Saswata Pattanaik** ([@saswata_pattanaik](https://github.com/saswata_pattanaik))
+

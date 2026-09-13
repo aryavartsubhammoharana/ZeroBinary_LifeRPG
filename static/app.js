@@ -307,7 +307,7 @@ const AI_GOALS = [
 // =============================================================================
 
 let hero = {
-    name: 'GSJustin',
+    name: 'Hero',
     title: 'The Creator',
     gender: 'M',
     lifestyle: 'Creator / Artist',
@@ -668,11 +668,13 @@ function setGender(g) {
 
 function onNameChange(val) {
     const clean = val.trim();
-    hero.name = clean || 'GSJustin';
+    hero.name = clean || (currentUser && (currentUser.username || currentUser.name)) || 'Hero';
     const previewName = document.getElementById('preview-hero-name');
     if (previewName) previewName.textContent = hero.name;
     const dashName = document.getElementById('dash-hero-name');
     if (dashName) dashName.textContent = hero.name;
+    const advName = document.getElementById('adv-hero-name');
+    if (advName) advName.textContent = hero.name;
 }
 
 function stepLifestyle(delta) {
@@ -1984,6 +1986,194 @@ function renderHeroSprite(canvasId, scaleFactor = 1.0) {
     }
 }
 
+/**
+ * 5-AXIS CYBERPUNK RETRO SPIDER / RADAR GRAPH RENDERER
+ * Visualizes INT (Knowledge), STR (Fitness), VIT (Vitality), WIL (Discipline), FIN (Finance)
+ */
+function renderHeroSpiderGraph(canvasId = 'hero-spider-canvas') {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // High-DPI screen scaling
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = 360;
+    const displayHeight = 280;
+
+    if (canvas.width !== Math.round(displayWidth * dpr) || canvas.height !== Math.round(displayHeight * dpr)) {
+        canvas.width = Math.round(displayWidth * dpr);
+        canvas.height = Math.round(displayHeight * dpr);
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+    }
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+    const h = window.hero || (typeof currentUser !== 'undefined' && currentUser?.hero) || {};
+    const intVal = h.knowledge || 15;
+    const strVal = h.fitness || 10;
+    const vitVal = h.vitality || 20;
+    const wilVal = h.discipline || 12;
+    const finVal = h.finance || 5;
+
+    const totalPts = intVal + strVal + vitVal + wilVal + finVal;
+    const totalEl = document.getElementById('spider-total-power');
+    if (totalEl) totalEl.textContent = `TOTAL: ${totalPts} PTS`;
+
+    const axes = [
+        { label: 'INT', fullName: 'Knowledge', val: intVal, color: '#38bdf8', icon: '🧠' },
+        { label: 'STR', fullName: 'Fitness', val: strVal, color: '#4ade80', icon: '🏋️' },
+        { label: 'VIT', fullName: 'Vitality', val: vitVal, color: '#f87171', icon: '⚡' },
+        { label: 'WIL', fullName: 'Discipline', val: wilVal, color: '#facc15', icon: '🛡️' },
+        { label: 'FIN', fullName: 'Finance', val: finVal, color: '#10b981', icon: '💎' }
+    ];
+
+    const numAxes = axes.length;
+    const cx = displayWidth / 2;
+    const cy = displayHeight / 2 + 6;
+    const maxRadius = 90;
+
+    const maxVal = Math.max(25, Math.ceil(Math.max(intVal, strVal, vitVal, wilVal, finVal, 20) / 5) * 5);
+    const startAngle = -Math.PI / 2; // Pointing straight up
+    const angleStep = (2 * Math.PI) / numAxes;
+
+    // 1. Concentric Pentagons (Web Grid)
+    const levels = 5;
+    for (let l = 1; l <= levels; l++) {
+        const r = (maxRadius / levels) * l;
+        ctx.beginPath();
+        for (let i = 0; i < numAxes; i++) {
+            const angle = startAngle + i * angleStep;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+
+        if (l === levels) {
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+            ctx.fill();
+        } else {
+            ctx.strokeStyle = 'rgba(51, 65, 85, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Level markers along upper vertical axis
+        if (l % 2 === 0 || l === levels) {
+            ctx.fillStyle = '#64748b';
+            ctx.font = '6px "Press Start 2P", monospace';
+            ctx.textAlign = 'right';
+            const levelVal = Math.round((maxVal / levels) * l);
+            ctx.fillText(`${levelVal}`, cx - 5, cy - r + 3);
+        }
+    }
+
+    // 2. Radial Spokes
+    for (let i = 0; i < numAxes; i++) {
+        const angle = startAngle + i * angleStep;
+        const outerX = cx + Math.cos(angle) * maxRadius;
+        const outerY = cy + Math.sin(angle) * maxRadius;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(outerX, outerY);
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.7)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+
+    // 3. Data Polygon
+    const dataPoints = [];
+    for (let i = 0; i < numAxes; i++) {
+        const angle = startAngle + i * angleStep;
+        const ratio = Math.min(1.0, Math.max(0.08, axes[i].val / maxVal));
+        const r = maxRadius * ratio;
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        dataPoints.push({ x, y, angle, ...axes[i] });
+    }
+
+    // Gradient fill
+    const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+    grad.addColorStop(0, 'rgba(56, 189, 248, 0.5)');
+    grad.addColorStop(0.7, 'rgba(99, 102, 241, 0.35)');
+    grad.addColorStop(1, 'rgba(168, 85, 247, 0.2)');
+
+    ctx.beginPath();
+    dataPoints.forEach((pt, i) => {
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.closePath();
+
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Glowing Neon Stroke
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#22d3ee';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 4. Center Core Node
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fill();
+
+    // 5. Data Vertices
+    dataPoints.forEach(pt => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fill();
+        ctx.strokeStyle = pt.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = pt.color;
+        ctx.fill();
+    });
+
+    // 6. Axis Labels & Values
+    const labelDist = maxRadius + 24;
+    axes.forEach((axis, i) => {
+        const angle = startAngle + i * angleStep;
+        const lx = cx + Math.cos(angle) * labelDist;
+        const ly = cy + Math.sin(angle) * labelDist;
+
+        let align = 'center';
+        if (Math.cos(angle) > 0.3) align = 'left';
+        else if (Math.cos(angle) < -0.3) align = 'right';
+
+        ctx.textAlign = align;
+
+        ctx.font = 'bold 8px "Press Start 2P", monospace';
+        ctx.fillStyle = axis.color;
+        ctx.fillText(`${axis.icon} ${axis.label}`, lx, ly - 3);
+
+        ctx.font = '7px "Press Start 2P", monospace';
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(`${axis.val} PTS`, lx, ly + 8);
+    });
+
+    ctx.restore();
+}
+
 function adjustColor(col, amt) {
     if (!col || !col.startsWith('#')) return col;
     let num = parseInt(col.slice(1), 16);
@@ -2182,6 +2372,12 @@ async function handleLogin(e) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Login failed');
 
+        if (identifier) {
+            hero.name = identifier;
+            const charNameInput = document.getElementById('char-name-input');
+            if (charNameInput) charNameInput.value = identifier;
+        }
+
         playSound('victory');
         checkAuth();
     } catch (err) {
@@ -2275,6 +2471,17 @@ async function checkAuth() {
             const settingsBtn = document.getElementById('btn-settings-top');
             if (settingsBtn) settingsBtn.style.display = 'inline-block';
             document.getElementById('auth-container')?.classList.add('hidden');
+
+            if (currentUser && (currentUser.username || currentUser.name)) {
+                const uName = currentUser.username || currentUser.name;
+                if (!hero.name || hero.name === 'Alex' || hero.name === 'GSJustin' || hero.name === 'Hero') {
+                    hero.name = uName;
+                }
+                const charNameInput = document.getElementById('char-name-input');
+                if (charNameInput && (!charNameInput.value || charNameInput.value === 'Hero' || charNameInput.value === 'GSJustin')) {
+                    charNameInput.value = uName;
+                }
+            }
             
             await loadUserCharacter();
 
@@ -2337,6 +2544,12 @@ async function loadUserCharacter() {
                 hero = { ...hero, ...data.character };
                 if (typeof hero.accessories === 'string') {
                     try { hero.accessories = JSON.parse(hero.accessories); } catch (e) {}
+                }
+                if (currentUser && (currentUser.username || currentUser.name)) {
+                    const fallbackName = currentUser.username || currentUser.name;
+                    if (!hero.name || hero.name === 'Alex' || hero.name === 'GSJustin' || hero.name === 'Hero') {
+                        hero.name = fallbackName;
+                    }
                 }
                 updateUIValues();
             }
@@ -2520,11 +2733,14 @@ function updateAdvDashboardUI() {
     setText('stats-tab-streak', streakVal);
     setText('hero-sheet-streak', `🔥 ${streakVal}`);
 
-    const heroName = hero.name || 'GSJustin';
+    const heroName = (currentUser && (currentUser.username || currentUser.name)) || (hero.name && hero.name !== 'GSJustin' && hero.name !== 'Hero' ? hero.name : '') || hero.name || 'Hero';
+    hero.name = heroName;
     const heroTitle = hero.title || 'PATHFINDER';
     const lvlStr = `LV ${String(hero.level || 1).padStart(2, '0')}`;
 
+    setText('adv-hero-name', heroName);
     setText('adv-player-name', heroName);
+    setText('adv-hero-lvl', `${lvlStr} ${hero.archetype || 'WARRIOR'}`);
     setText('adv-player-lvl', `${lvlStr} • ${heroTitle}`);
     setText('hero-sheet-name', heroName);
     setText('hero-sheet-title', `"${heroTitle}"`);
@@ -2560,6 +2776,35 @@ function updateAdvDashboardUI() {
     setBarWidth('d-bar-vit', Math.min(100, (hero.vitality || 20) * 1.5));
     setBarWidth('d-bar-wil', Math.min(100, (hero.discipline || 12) * 2.5));
     setBarWidth('d-bar-fin', Math.min(100, (hero.finance || 5) * 4));
+
+    // Dynamic Activity Distribution
+    const kPts = hero.knowledge || 15;
+    const fPts = hero.fitness || 10;
+    const vPts = hero.vitality || 20;
+    const dPts = hero.discipline || 12;
+    const finPts = hero.finance || 5;
+    const totalStatPts = Math.max(1, kPts + fPts + vPts + dPts + finPts);
+
+    const kPct = Math.round((kPts / totalStatPts) * 100);
+    const fPct = Math.round((fPts / totalStatPts) * 100);
+    const vPct = Math.round((vPts / totalStatPts) * 100);
+    const dPct = Math.round((dPts / totalStatPts) * 100);
+    const finPct = Math.max(0, 100 - (kPct + fPct + vPct + dPct));
+
+    setText('act-pct-knowledge', `${kPct}%`);
+    setText('act-pct-fitness', `${fPct}%`);
+    setText('act-pct-vitality', `${vPct}%`);
+    setText('act-pct-discipline', `${dPct}%`);
+    setText('act-pct-finance', `${finPct}%`);
+
+    setBarWidth('act-bar-knowledge', kPct);
+    setBarWidth('act-bar-fitness', fPct);
+    setBarWidth('act-bar-vitality', vPct);
+    setBarWidth('act-bar-discipline', dPct);
+    setBarWidth('act-bar-finance', finPct);
+
+    // Refresh Hero Spider Radar Graph
+    renderHeroSpiderGraph('hero-spider-canvas');
 
     // Home Quick Stats Panel Updates
     setText('stats-lvl-badge', lvlStr);
@@ -2738,7 +2983,10 @@ function switchAdvTab(tab, updateHistory = true) {
             renderBuildQuickPalette();
         }
     } else if (tab === 'hero' || tab === 'stats') {
-        setTimeout(() => renderHeroSprite('hero-sheet-avatar-canvas', 0.75), 30);
+        setTimeout(() => {
+            renderHeroSprite('hero-sheet-avatar-canvas', 0.75);
+            renderHeroSpiderGraph('hero-spider-canvas');
+        }, 30);
     } else if (tab === 'quests') {
         renderBoardQuests();
         loadQuestMissionStats();
@@ -5287,10 +5535,11 @@ async function loadLeaderboard() {
 }
 
 function getFallbackLeaderboard() {
+    const activeName = (currentUser && (currentUser.username || currentUser.name)) || hero.name || 'Hero';
     return [
         { rank: 1, name: "Aria_TheSage", archetype: "SCHOLAR", level: 12, lifetime_xp: 4850, today_xp: 320, streak: 14 },
         { rank: 2, name: "Kaelen_Ironclad", archetype: "WARRIOR", level: 11, lifetime_xp: 4200, today_xp: 280, streak: 9 },
-        { rank: 3, name: "GSJustin (You)", archetype: hero.archetype || "WARRIOR", level: hero.level || 1, lifetime_xp: (hero.level || 1) * 100 + (hero.xp || 0), today_xp: 120, streak: 1 },
+        { rank: 3, name: `${activeName} (You)`, archetype: hero.archetype || "WARRIOR", level: hero.level || 1, lifetime_xp: (hero.level || 1) * 100 + (hero.xp || 0), today_xp: 120, streak: 1 },
         { rank: 4, name: "ZenithBuilder", archetype: "BUILDER", level: 9, lifetime_xp: 3400, today_xp: 150, streak: 6 },
         { rank: 5, name: "CyberMonk", archetype: "MONK", level: 8, lifetime_xp: 2950, today_xp: 90, streak: 12 }
     ];

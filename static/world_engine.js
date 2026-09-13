@@ -42,7 +42,9 @@ class LifeRPGWorldEngine {
             walkFrame: 0,
             currentVehicle: 'walk', // walk, bicycle, skateboard, scooter, motorcycle, car, jet
             isCelebrating: false,
-            celebrationTimer: 0
+            celebrationTimer: 0,
+            isSwimming: false,
+            wasInWater: false
         };
         
         // Controls Input State
@@ -193,15 +195,15 @@ class LifeRPGWorldEngine {
             },
             {
                 id: 'recovery_shrine',
-                name: 'Zen Sanctuary',
+                name: 'Zen Monastery',
                 sub: 'Zero-Shame Recovery Deck',
-                icon: '🛡️',
+                icon: '⛩️',
                 x: 2450,
-                y: 750,
+                y: 460,
                 w: 220,
                 h: 160,
                 doorX: 2560,
-                doorY: 910,
+                doorY: 620,
                 color: '#064e3b',
                 roofColor: '#10b981',
                 actionLabel: 'RECOVERY MODE',
@@ -460,6 +462,64 @@ class LifeRPGWorldEngine {
         this.loopId = requestAnimationFrame(loop);
     }
     
+    getRiverBounds(x) {
+        const t = Math.max(0, Math.min(1, x / this.worldWidth));
+        const omt = 1 - t;
+        // Cubic bezier matching renderTerrain river:
+        // P0=(0, 800), P1=(900, 850), P2=(1500, 750), P3=(3200, 900)
+        const yTop = (omt * omt * omt * 800) +
+                     (3 * omt * omt * t * 850) +
+                     (3 * omt * t * t * 750) +
+                     (t * t * t * 900);
+        const yBottom = yTop + 120;
+        return { yTop, yBottom };
+    }
+
+    isPointInWater(x, y) {
+        // Wooden Bridges across river allow normal dry walking:
+        // Bridge 1: 580 to 690, Bridge 2: 1330 to 1440, Bridge 3: 2030 to 2140
+        if ((x >= 575 && x <= 695) || 
+            (x >= 1325 && x <= 1445) || 
+            (x >= 2025 && x <= 2145)) {
+            return false;
+        }
+        const { yTop, yBottom } = this.getRiverBounds(x);
+        return (y >= yTop + 2 && y <= yBottom - 2);
+    }
+
+    canMoveTo(x, y) {
+        // Prevent walking through solid building walls while keeping front door accessible
+        for (const b of this.buildings) {
+            const pad = 6;
+            const bLeft = b.x + pad;
+            const bRight = b.x + b.w - pad;
+            const bTop = b.y + 35;
+            const bBottom = b.y + b.h - 10;
+            
+            if (x >= bLeft && x <= bRight && y >= bTop && y <= bBottom) {
+                const distToDoor = Math.hypot(x - b.doorX, y - b.doorY);
+                if (distToDoor > 32) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    spawnWaterSplash(x, y, count = 3) {
+        for (let i = 0; i < count; i++) {
+            this.floatingParticles.push({
+                x: x + (Math.random() * 20 - 10),
+                y: y + 4 + (Math.random() * 8 - 4),
+                vx: (Math.random() - 0.5) * 2.5,
+                vy: (Math.random() - 0.5) * 2 - 0.5,
+                color: ['#bae6fd', '#7dd3fc', '#38bdf8', '#ffffff'][Math.floor(Math.random() * 4)],
+                size: 2 + Math.random() * 2,
+                life: 14 + Math.floor(Math.random() * 8)
+            });
+        }
+    }
+
     update(dt) {
         let dx = 0;
         let dy = 0;
@@ -498,11 +558,38 @@ class LifeRPGWorldEngine {
             }
         }
         
+        // Water & Swimming State Detection
+        const inWater = this.isPointInWater(this.player.x, this.player.y);
+        if (!this.player.wasInWater && inWater) {
+            this.spawnWaterSplash(this.player.x, this.player.y, 8);
+        } else if (this.player.wasInWater && !inWater) {
+            this.spawnWaterSplash(this.player.x, this.player.y, 5);
+        }
+        this.player.wasInWater = inWater;
+        this.player.isSwimming = inWater;
+
         this.player.isMoving = (dx !== 0 || dy !== 0);
         
         if (this.player.isMoving) {
-            this.player.x += dx * this.player.speed;
-            this.player.y += dy * this.player.speed;
+            let moveSpeed = this.player.speed;
+            if (inWater && this.player.currentVehicle !== 'futuristic jet') {
+                moveSpeed = 2.8; // Swimming pace with water resistance
+                if (this.player.animTimer % 8 === 0) {
+                    this.spawnWaterSplash(this.player.x, this.player.y, 2);
+                }
+            }
+
+            const nextX = this.player.x + dx * moveSpeed;
+            const nextY = this.player.y + dy * moveSpeed;
+
+            // Slide along building walls if colliding
+            if (this.canMoveTo(nextX, this.player.y)) {
+                this.player.x = nextX;
+            }
+            if (this.canMoveTo(this.player.x, nextY)) {
+                this.player.y = nextY;
+            }
+
             this.player.animTimer++;
             if (this.player.animTimer % 8 === 0) {
                 this.player.walkFrame = (this.player.walkFrame + 1) % 4;
@@ -806,7 +893,7 @@ class LifeRPGWorldEngine {
         const treeLocs = [
             [200, 200], [350, 250], [500, 180], [800, 220], [1050, 280], [1650, 220], [1800, 260],
             [250, 600], [320, 850], [250, 1200], [380, 1600], [950, 950], [1150, 1600], [1750, 1650],
-            [2350, 350], [2600, 500], [2750, 700], [2500, 1100], [2700, 1400], [2850, 1600]
+            [2350, 350], [2360, 520], [2740, 520], [2750, 700], [2500, 1100], [2700, 1400], [2850, 1600]
         ];
         
         treeLocs.forEach(([tx, ty]) => {
@@ -998,13 +1085,7 @@ class LifeRPGWorldEngine {
             const jump = Math.sin((this.player.celebrationTimer / 90) * Math.PI) * 22;
             py -= jump;
         }
-        
-        // Shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.beginPath();
-        ctx.ellipse(px, this.player.y + 16, 18, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
+
         const hero = window.hero || {};
         const skin = hero.skin_color || '#f5c29a';
         const hair = hero.hair_color || '#3b2219';
@@ -1012,6 +1093,132 @@ class LifeRPGWorldEngine {
         const bot = hero.bottom_color || '#1e293b';
         
         const v = this.player.currentVehicle;
+        const isSwimming = this.player.isSwimming && (v !== 'futuristic jet');
+
+        // =====================================================================
+        // SWIMMING SPRITE & WATER INTERACTIONS (When in River / Outside Bridges)
+        // =====================================================================
+        if (isSwimming) {
+            const rippleTime = this.timeTick * 0.08;
+            const r1 = (rippleTime % 1);
+            const r2 = ((rippleTime + 0.5) % 1);
+
+            // Expanding Outer Water Ripple 1
+            ctx.strokeStyle = `rgba(186, 230, 253, ${0.75 * (1 - r1)})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(px, py + 4, 16 + r1 * 14, 6 + r1 * 5, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Expanding Outer Water Ripple 2
+            ctx.strokeStyle = `rgba(125, 211, 252, ${0.65 * (1 - r2)})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(px, py + 4, 16 + r2 * 14, 6 + r2 * 5, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Inner Foam Surface Wake
+            ctx.fillStyle = 'rgba(224, 242, 254, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(px, py + 3, 14, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Submerged lower body / legs silhouette (water refraction)
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = '#0284c7';
+            ctx.fillRect(px - 5, py + 4, 10, 8);
+            ctx.restore();
+
+            // Water Bobbing Motion
+            const swimBob = this.player.isMoving 
+                ? Math.sin(this.player.animTimer * 0.25) * 2.5 
+                : Math.sin(this.timeTick * 0.08) * 1.5;
+
+            // Torso / Shirt (partially submerged)
+            ctx.fillStyle = top;
+            ctx.fillRect(px - 7, py - 6 + swimBob, 14, 10);
+
+            // Head / Skin
+            ctx.fillStyle = skin;
+            ctx.fillRect(px - 6, py - 18 + swimBob, 12, 12);
+
+            // Hair
+            ctx.fillStyle = hair;
+            ctx.fillRect(px - 7, py - 22 + swimBob, 14, 6);
+            ctx.fillRect(px - 7, py - 18 + swimBob, 3, 5);
+
+            // Eyes
+            ctx.fillStyle = '#0f172a';
+            if (this.player.direction === 'down' || this.player.direction === 'right') {
+                ctx.fillRect(px + 1, py - 14 + swimBob, 2, 2);
+            }
+            if (this.player.direction === 'down' || this.player.direction === 'left') {
+                ctx.fillRect(px - 3, py - 14 + swimBob, 2, 2);
+            }
+
+            // Swimming Arms & Paddling Strokes
+            const stroke = Math.sin(this.player.animTimer * 0.25);
+            ctx.fillStyle = skin;
+            if (this.player.isMoving) {
+                if (this.player.direction === 'left') {
+                    // Left arm forward reach
+                    ctx.fillRect(px - 14 - stroke * 4, py - 2 + swimBob, 8, 4);
+                    ctx.fillRect(px + 4, py + 1 + swimBob, 6, 4);
+                    // Splash foam
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(px - 16 - stroke * 4, py - 1 + swimBob, 3, 3);
+                } else if (this.player.direction === 'right') {
+                    // Right arm forward reach
+                    ctx.fillRect(px + 6 + stroke * 4, py - 2 + swimBob, 8, 4);
+                    ctx.fillRect(px - 10, py + 1 + swimBob, 6, 4);
+                    // Splash foam
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(px + 13 + stroke * 4, py - 1 + swimBob, 3, 3);
+                } else if (this.player.direction === 'up') {
+                    // Reaching forward into the water
+                    ctx.fillRect(px - 10, py - 10 + stroke * 3 + swimBob, 4, 7);
+                    ctx.fillRect(px + 6, py - 10 - stroke * 3 + swimBob, 4, 7);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(px - 11, py - 11 + stroke * 3 + swimBob, 3, 3);
+                    ctx.fillRect(px + 7, py - 11 - stroke * 3 + swimBob, 3, 3);
+                } else {
+                    // Down / freestyle crawl
+                    ctx.fillRect(px - 11, py - 2 + stroke * 4 + swimBob, 5, 5);
+                    ctx.fillRect(px + 6, py - 2 - stroke * 4 + swimBob, 5, 5);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(px - 13, py + stroke * 4 + swimBob, 3, 3);
+                    ctx.fillRect(px + 9, py - stroke * 4 + swimBob, 3, 3);
+                }
+            } else {
+                // Treading water
+                const paddle = Math.sin(this.timeTick * 0.1) * 2;
+                ctx.fillRect(px - 11, py - 1 + paddle + swimBob, 5, 4);
+                ctx.fillRect(px + 6, py - 1 - paddle + swimBob, 5, 4);
+            }
+
+            // Floating Player Name Tag with Swimming Indicator
+            ctx.fillStyle = 'rgba(7, 11, 20, 0.85)';
+            ctx.fillRect(px - 40, py - 38 + swimBob, 80, 14);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px - 40, py - 38 + swimBob, 80, 14);
+
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = '6px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText(`🏊 ${hero.name || 'WARRIOR'}`, px, py - 28 + swimBob);
+            return;
+        }
+
+        // =====================================================================
+        // NORMAL DRY-LAND & ON-BRIDGE RENDERING
+        // =====================================================================
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(px, this.player.y + 16, 18, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
         
         // VEHICLE UNDERLAY (Bicycle, Skateboard, Car, Jet)
         if (v === 'bicycle') {

@@ -946,11 +946,7 @@ body.rpg-body {
 }
 
 /* ==========================================================================
-   ADVENTURE DASHBOARD SCREEN (ChronoQuest Aesthetic)
-   ========================================================================== */
-
-/* ==========================================================================
-   ADVENTURE DASHBOARD SCREEN (ChronoQuest Full-Screen Aesthetic)
+   ADVENTURE DASHBOARD SCREEN (LifeRPG Full-Screen Aesthetic)
    ========================================================================== */
 
 .adventure-dashboard-container {
@@ -2087,6 +2083,10 @@ body.rpg-body {
     width: 100%;
 }
 
+.adv-tab-view > * {
+    flex-shrink: 0;
+}
+
 .adv-tab-view.hidden {
     display: none !important;
 }
@@ -2210,6 +2210,71 @@ body.rpg-body {
     font-size: 0.55rem;
     color: #94a3b8;
     line-height: 1.2;
+}
+
+/* --- Hero Attribute Spider Radar Chart Box --- */
+.spider-radar-box {
+    background: #090e18;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.spider-radar-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+}
+
+.spider-radar-top-info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 4px 6px 4px;
+    align-items: center;
+}
+
+.radar-tag {
+    font-family: var(--font-pixel);
+    font-size: 0.44rem;
+    color: #64748b;
+    letter-spacing: 0.05em;
+}
+
+.radar-total {
+    font-family: var(--font-pixel);
+    font-size: 0.52rem;
+    color: var(--rpg-cyan);
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+.spider-canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 280px;
+}
+
+.act-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-pixel);
+    font-size: 0.46rem;
+    color: #94a3b8;
+    padding-top: 6px;
+    margin-bottom: 2px;
+    border-top: 1px dashed #1e293b;
 }
 
 .activity-bars-box {
@@ -5692,15 +5757,15 @@ body.reduced-motion * {
 /* Top Header Bar */
 .adv-top-bar {
     width: 100% !important;
-    height: 52px !important;
-    min-height: 52px !important;
-    flex: 0 0 52px !important;
+    height: 76px !important;
+    min-height: 76px !important;
+    flex: 0 0 76px !important;
     background: #090e18 !important;
     border-bottom: 2px solid #1e293b !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 0 16px !important;
+    padding: 12px 16px !important;
     box-sizing: border-box !important;
     z-index: 1000 !important;
 }
@@ -5711,7 +5776,7 @@ body.reduced-motion * {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
-    height: calc(100vh - 52px) !important;
+    height: calc(100vh - 76px) !important;
     flex: 1 1 0 !important;
     min-height: 0 !important;
     background: #080c14 !important;
